@@ -1,0 +1,41 @@
+{
+  "name": "Slack to Local Service Extended",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-webhook"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/receive-message",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={ \"text\": $json[\"event\"][\"text\"], \"user\": $json[\"event\"][\"user\"], \"channel\": $json[\"event\"][\"channel\"] }"
+      },
+      "name": "Send to Local Service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send to Local Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
