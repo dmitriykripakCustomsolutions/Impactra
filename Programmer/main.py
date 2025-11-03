@@ -3,9 +3,9 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/receive-message', methods=['POST'])
+@app.route('/process-task', methods=['POST'])
 def receive_message():
-    app.logger.info(f"\'receive-message\' Endpoint works")
+    app.logger.info(f"\'process-task\' Endpoint works")
     # if request.is_json:
     #     data = request.get_json()
     #     message = data.get('message', '')
@@ -14,8 +14,8 @@ def receive_message():
     #     message = request.form.get('message', '')
     # app.logger.info(f"A message received: {message}")
     # return jsonify({"status": "ok", "received": message}), 200
-    return "\'receive-message\' Endpoint works"
+    return "\'process-task\' Endpoint works"
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)
