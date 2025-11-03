@@ -5,3 +5,4 @@
 /.vs/slnx.sqlite
 /.vs
 /.vscode
+/n8n/.env
