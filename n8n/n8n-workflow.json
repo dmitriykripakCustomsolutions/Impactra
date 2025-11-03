@@ -4,38 +4,84 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "slack-webhook"
+        "path": "slack-webhook",
+        "responseMode": "lastNode",
+        "options": {}
       },
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [250, 300]
+      "position": [
+        0,
+        0
+      ],
+      "id": "2333a718-7bac-4c85-bced-71e74e7bc15b",
+      "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb"
     },
     {
       "parameters": {
-        "url": "http://host.docker.internal:5000/receive-message",
-        "method": "POST",
-        "jsonParameters": true,
-        "options": {},
-        "bodyParametersJson": "={ \"text\": $json[\"event\"][\"text\"], \"user\": $json[\"event\"][\"user\"], \"channel\": $json[\"event\"][\"channel\"] }"
+        "jsCode": "if ($json[\"type\"] === \"url_verification\") {\n  return [\n    {\n      json: {\n        challenge: $json[\"challenge\"]\n      }\n    }\n  ];\n} else {\n  return [\n    {\n      json: $json\n    }\n  ];\n}\n"
       },
-      "name": "Send to Local Service",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        32
+      ],
+      "id": "e78c3547-384f-4bce-9993-629904ce4b25",
+      "name": "Respond to Slack Verification",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5000/receive-message",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "name": "Send to Business Analyst Agent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
-      "position": [500, 300]
+      "position": [
+        464,
+        0
+      ],
+      "id": "addb3852-a528-4c03-9c14-21d2e37fa657"
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
         [
           {
-            "node": "Send to Local Service",
+            "node": "Respond to Slack Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Slack Verification": {
+      "main": [
+        [
+          {
+            "node": "Send to Business Analyst Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     }
-  }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06cfac7f-8e2f-4a18-aa26-082265601662",
+  "meta": {
+    "instanceId": "4352f804d67fe822106d2b772100f63681ce2cdfe768e92e566402a4b76a14ad"
+  },
+  "id": "IkSUVFXB6riy1bA2",
+  "tags": []
 }
