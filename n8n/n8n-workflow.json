@@ -39,7 +39,7 @@
         "jsonParameters": true,
         "options": {}
       },
-      "name": "Send to Business Analyst Agent",
+      "name": "Business Analyst: Raw Technical Task Send",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
@@ -47,6 +47,70 @@
         0
       ],
       "id": "addb3852-a528-4c03-9c14-21d2e37fa657"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5001/process-task",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "name": "Programmer: Technical Task Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "b7c5cc3d-a383-4b68-af44-c54bfef41e89"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5002/run-code",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "name": "Code Runner: Source Code Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        928,
+        0
+      ],
+      "id": "d064e59c-c087-49f4-8f5d-19ee6086e44e"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5001/receive-code-runner-result",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "name": "Programmer: Code Runner Result Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "306b8b89-30bb-466a-9ad2-9eae0da10a8a"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5000/receive-task-completion-result",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "name": "Business Analyst: Task Completion Result Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        0
+      ],
+      "id": "201bf5e8-2a08-4c36-a5cc-e06dece91d98"
     }
   ],
   "pinData": {},
@@ -66,7 +130,51 @@
       "main": [
         [
           {
-            "node": "Send to Business Analyst Agent",
+            "node": "Business Analyst: Raw Technical Task Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analyst: Raw Technical Task Send": {
+      "main": [
+        [
+          {
+            "node": "Programmer: Technical Task Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programmer: Technical Task Send": {
+      "main": [
+        [
+          {
+            "node": "Code Runner: Source Code Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Runner: Source Code Send": {
+      "main": [
+        [
+          {
+            "node": "Programmer: Code Runner Result Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programmer: Code Runner Result Send": {
+      "main": [
+        [
+          {
+            "node": "Business Analyst: Task Completion Result Send",
             "type": "main",
             "index": 0
           }
@@ -78,7 +186,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "06cfac7f-8e2f-4a18-aa26-082265601662",
+  "versionId": "9b0c0e21-0c4a-4a52-9446-fb2f889c87fa",
   "meta": {
     "instanceId": "4352f804d67fe822106d2b772100f63681ce2cdfe768e92e566402a4b76a14ad"
   },

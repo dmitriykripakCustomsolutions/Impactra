@@ -14,7 +14,7 @@ def receive_message():
     #     message = request.form.get('message', '')
     # app.logger.info(f"A message received: {message}")
     # return jsonify({"status": "ok", "received": message}), 200
-    return "\'run-code\' Endpoint works"
+    return jsonify({"message": "\'run-code\' Endpoint works"})
 
 
 if __name__ == '__main__':
