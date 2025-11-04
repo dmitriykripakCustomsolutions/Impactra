@@ -3,23 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "slack-webhook",
-        "responseMode": "lastNode",
-        "options": {}
-      },
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        0,
-        0
-      ],
-      "id": "2333a718-7bac-4c85-bced-71e74e7bc15b",
-      "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb"
-    },
-    {
-      "parameters": {
         "jsCode": "if ($json[\"type\"] === \"url_verification\") {\n  return [\n    {\n      json: {\n        challenge: $json[\"challenge\"]\n      }\n    }\n  ];\n} else {\n  return [\n    {\n      json: $json\n    }\n  ];\n}\n"
       },
       "type": "n8n-nodes-base.code",
@@ -111,21 +94,54 @@
         0
       ],
       "id": "201bf5e8-2a08-4c36-a5cc-e06dece91d98"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook: Slack Raw Technical Task Receiving",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2333a718-7bac-4c85-bced-71e74e7bc15b",
+      "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09PH87TE0P",
+          "mode": "id"
+        },
+        "text": "=Task Completion Result  {{ $json.message }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1488,
+        0
+      ],
+      "id": "f1303a14-5584-4420-b649-c7b043c85b2c",
+      "name": "Send a message",
+      "webhookId": "45abbc3d-4518-4137-85c3-d493c9950ca5",
+      "credentials": {
+        "slackApi": {
+          "id": "lnQR4ZnQgVz6Jbp5",
+          "name": "Slack account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Respond to Slack Verification",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Respond to Slack Verification": {
       "main": [
         [
@@ -180,14 +196,37 @@
           }
         ]
       ]
+    },
+    "Webhook: Slack Raw Technical Task Receiving": {
+      "main": [
+        [
+          {
+            "node": "Respond to Slack Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analyst: Task Completion Result Send": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "9b0c0e21-0c4a-4a52-9446-fb2f889c87fa",
+  "versionId": "6fb181f2-b378-42f4-98f0-624c783db277",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "4352f804d67fe822106d2b772100f63681ce2cdfe768e92e566402a4b76a14ad"
   },
   "id": "IkSUVFXB6riy1bA2",
