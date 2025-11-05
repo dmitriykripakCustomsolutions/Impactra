@@ -11,12 +11,13 @@ app = Flask(__name__)
 
 @app.route('/receive-message', methods=['POST'])
 def receive_message():
-    if request.is_json:
-        data = request.get_json()
+    try:
+        data = request.get_json(force=True)
         raw = data.get('message') or data.get('text') or ''
-    else:
-        raw = request.form.get('message') or request.form.get('text') or ''
-
+    except Exception as e:
+        app.logger.error(f"Failed to parse JSON payload: {e}")
+        return jsonify({"error": "invalid_json", "details": str(e)}), 400
+    
     if not raw:
         return jsonify({"error": "No 'message' provided"}), 400
 
