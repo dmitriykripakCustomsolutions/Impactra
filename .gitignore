@@ -5,5 +5,8 @@
 /.vs/slnx.sqlite
 /.vs
 /.vscode
-/.venv
+__pycache__/
+/.venv/
 /n8n/.env
+.env
+BusinessAnalyst/venv/
