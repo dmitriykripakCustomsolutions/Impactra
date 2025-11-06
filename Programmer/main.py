@@ -1,5 +1,6 @@
-import logging
+import json
 from flask import Flask, request, jsonify
+from cerebras_ai import _call_cerebras_ai_chat
 
 app = Flask(__name__)
 
@@ -7,17 +8,21 @@ app = Flask(__name__)
 def process_task():    
     try:
         data = request.get_json(force=True)
-        raw = data.get('tasks') or data.get('text') or ''
     except Exception as e:
         app.logger.error(f"Failed to parse JSON payload: {e}")
         return jsonify({"error": "invalid_json", "details": str(e)}), 400
     
-    if not raw:
+    if not data:
         return jsonify({"error": "No 'message' provided"}), 400
 
     try:
-        result = _call_cerebras_ai_chat(raw)
-        return jsonify({"original": raw, "tasks": result}), 200
+        for i in range(len(data)):
+            print(f"Index {i}: {data[i]}")
+            taskJsonFormatted = json.dumps(data[i])
+            result = _call_cerebras_ai_chat(taskJsonFormatted)
+
+
+        return jsonify({"task": taskJsonFormatted, "completionResult": result}), 200
     except Exception as e:
         app.logger.exception("Failed to analyze message")
         return jsonify({"error": "internal_error", "details": str(e)}), 500

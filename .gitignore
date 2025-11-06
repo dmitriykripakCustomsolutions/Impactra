@@ -11,3 +11,4 @@ __pycache__/
 .env
 BusinessAnalyst/venv/
 Programmer/venv/
+Programmer/.vscode/
