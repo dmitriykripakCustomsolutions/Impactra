@@ -1,9 +1,11 @@
 FROM python:3.12-slim
 
+ENV OPENAI_API_KEY=""
+ENV CEREBRAS_API_KEY=""
+
 WORKDIR /app
 
-COPY main.py .
-COPY requirements.txt .
+COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
