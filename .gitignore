@@ -10,3 +10,4 @@ __pycache__/
 /n8n/.env
 .env
 BusinessAnalyst/venv/
+Programmer/venv/
