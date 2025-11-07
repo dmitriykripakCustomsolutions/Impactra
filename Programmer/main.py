@@ -20,9 +20,9 @@ def process_task():
             print(f"Index {i}: {data[i]}")
             taskJsonFormatted = json.dumps(data[i])
             result = _call_cerebras_ai_chat(taskJsonFormatted)
+            response = json.dumps({"sourceCode": result})
 
-
-        return jsonify({"task": taskJsonFormatted, "completionResult": result}), 200
+        return jsonify({"task": taskJsonFormatted, "completionResult": response}), 200
     except Exception as e:
         app.logger.exception("Failed to analyze message")
         return jsonify({"error": "internal_error", "details": str(e)}), 500
