@@ -58,7 +58,7 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://host.docker.internal:5002/run-code",
+        "url": "http://192.168.0.108:5002/run-code",
         "jsonParameters": true,
         "options": {},
         "bodyParametersJson": "={{ $json.completionResult }}"
@@ -75,9 +75,10 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://host.docker.internal:5001/receive-code-runner-result",
-        "jsonParameters": true,
-        "options": {}
+        "url": "http://192.168.0.108:5001/receive-code-runner-result",
+        "options": {
+          "bodyContentType": "raw"
+        }
       },
       "name": "Programmer: Code Runner Result Send",
       "type": "n8n-nodes-base.httpRequest",
@@ -86,8 +87,7 @@
         1376,
         0
       ],
-      "id": "306b8b89-30bb-466a-9ad2-9eae0da10a8a",
-      "disabled": true
+      "id": "306b8b89-30bb-466a-9ad2-9eae0da10a8a"
     },
     {
       "parameters": {
@@ -159,7 +159,7 @@
         "options": {
           "bodyContentType": "raw"
         },
-        "bodyParametersJson": "={{ $json.sourceCode }}"
+        "bodyParametersJson": "={{ $json.result }}"
       },
       "name": "Tester: Test Source Code",
       "type": "n8n-nodes-base.httpRequest",
@@ -266,7 +266,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "7c85db50-5592-4169-944e-b623094b77d1",
+  "versionId": "d0ecd50e-3592-4ce8-aff7-a1a0e19197ed",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4352f804d67fe822106d2b772100f63681ce2cdfe768e92e566402a4b76a14ad"
