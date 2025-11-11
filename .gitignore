@@ -14,3 +14,5 @@ Programmer/venv/
 Programmer/.vscode/
 CodeRunner/venv/
 CodeRunner/.vscode/
+Tester/venv/
+Tester/.vscode/
