@@ -58,7 +58,7 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://192.168.0.108:5002/run-code",
+        "url": "http://host.docker.internal:5002/run-code",
         "jsonParameters": true,
         "options": {},
         "bodyParametersJson": "={{ $json.completionResult }}"
@@ -75,10 +75,10 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://192.168.0.108:5001/receive-code-runner-result",
-        "options": {
-          "bodyContentType": "raw"
-        }
+        "url": "http://host.docker.internal:5001/receive-code-runner-result",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ $json.test_results }}"
       },
       "name": "Programmer: Code Runner Result Send",
       "type": "n8n-nodes-base.httpRequest",
@@ -154,11 +154,9 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://192.168.0.108:5003/test-source-code",
+        "url": "http://host.docker.internal:5003/test-source-code",
         "jsonParameters": true,
-        "options": {
-          "bodyContentType": "raw"
-        },
+        "options": {},
         "bodyParametersJson": "={{ $json.result }}"
       },
       "name": "Tester: Test Source Code",
@@ -266,7 +264,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d0ecd50e-3592-4ce8-aff7-a1a0e19197ed",
+  "versionId": "ab5c4cf8-8246-4b67-8cdb-11005c3d4346",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4352f804d67fe822106d2b772100f63681ce2cdfe768e92e566402a4b76a14ad"
