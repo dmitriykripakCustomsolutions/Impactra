@@ -21,7 +21,7 @@ def receive_message():
             }), 400
 
         result = execute_code_safely(sourceCode)
-        return jsonify(result)
+        return jsonify({"result": result})
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")

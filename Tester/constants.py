@@ -1,0 +1,1 @@
+SYSTEM_CONTENT = "You're tester of the software. You have to cover the code with tests."

@@ -29,14 +29,19 @@ def process_task():
 
 @app.route('/receive-code-runner-result', methods=['POST'])
 def receive_code_runner_result():    
-    # if request.is_json:
-    #     data = request.get_json()
-    #     message = data.get('message', '')
-    # else:
-    #     # If form-urlencoded
-    #     message = request.form.get('message', '')
-    # app.logger.info(f"A message received: {message}")
-    # return jsonify({"status": "ok", "received": message}), 200
+    try:
+        data = request.get_json(force=True)
+    except Exception as e:
+        app.logger.error(f"Failed to parse JSON payload: {e}")
+        return jsonify({"error": "invalid_json", "details": str(e)}), 400
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    compiled = data.get('compiled', '')
+    error = data.get('error', '')
+    sourceCode = data.get('sourceCode', '')
+    
     return jsonify({"message": "\'receive-code-runner-result\' Endpoint works"})
 
 
