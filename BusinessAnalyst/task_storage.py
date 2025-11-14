@@ -47,7 +47,7 @@ def generate_task_folder_name_from_description(original: str) -> str:
         
         # Combine timestamp with AI-generated name
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        folder_name = f"{now}_{ai_folder_name}"
+        folder_name = f"{ai_folder_name}_{now}"
         
         logger.info(f"Generated AI-based folder name: {folder_name}")
         return folder_name
