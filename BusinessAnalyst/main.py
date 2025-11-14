@@ -27,7 +27,7 @@ def receive_message():
         
         # Save task creation results to volume
         try:
-            storage_result = save_task_results(original=raw, tasks_result=result)
+            storage_result = save_task_results(original=raw, tasks_result=result, task_id=task_id)
             app.logger.info(f"Task storage: {storage_result}")
         except Exception as storage_error:
             app.logger.warning(f"Failed to save task results to volume: {storage_error}")
@@ -49,8 +49,5 @@ def receive_task_completion_result():
 
 
 if __name__ == '__main__':
-    # Enable basic logging
     logging.basicConfig(level=logging.INFO)
-    # _call_openai_chat(prompt="Hello, world!")
-    # _call_cerebras_ai_chat(prompt="Write a simple array insertion sort algorithm in python.")
     app.run(host='0.0.0.0', port=5000)

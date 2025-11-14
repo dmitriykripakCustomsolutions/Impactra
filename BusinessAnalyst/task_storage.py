@@ -3,7 +3,8 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
+from cerebras_ai import _cerebras_ai_generate_folder_name
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +13,6 @@ TASKS_VOLUME_PATH = "/data/tasks"
 
 
 def ensure_tasks_folder() -> str:
-    """
-    Ensure the tasks folder exists in the Docker volume.
-    Creates the folder if it doesn't exist.
-    
-    Returns:
-        str: The path to the tasks folder
-    """
     tasks_path = Path(TASKS_VOLUME_PATH)
     try:
         tasks_path.mkdir(parents=True, exist_ok=True)
@@ -29,11 +23,40 @@ def ensure_tasks_folder() -> str:
         raise
 
 
-def generate_task_folder_name() -> str:
+def generate_task_folder_name_from_description(original: str) -> str:
+    try:
+        # Create a prompt to generate a short, concise folder name (max 3-5 words)
+        prompt = (
+            f"Given the following task description, generate a SHORT folder name (3-5 words max, lowercase, no special chars except underscores). "
+            f"Use only letters, numbers, and underscores. No spaces. Example: 'build_api_endpoint' or 'fix_auth_bug'.\n\n"
+            f"Task: {original}"
+        )
+        
+        # Call Cerebras AI to generate the folder name
+        ai_folder_name = _cerebras_ai_generate_folder_name(prompt, max_tokens=50)
+        
+        # Clean the response - remove any extra whitespace and special characters
+        ai_folder_name = ai_folder_name.strip().lower()
+        ai_folder_name = "".join(c for c in ai_folder_name if c.isalnum() or c == '_')
+        
+        # Ensure it's not empty and not too long
+        if not ai_folder_name:
+            ai_folder_name = "task"
+        if len(ai_folder_name) > 50:
+            ai_folder_name = ai_folder_name[:50]
+        
+        # Combine timestamp with AI-generated name
+        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        folder_name = f"{now}_{ai_folder_name}"
+        
+        logger.info(f"Generated AI-based folder name: {folder_name}")
+        return folder_name
     
-    now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    # return f"{now}_{task_id}"
-    return now
+    except Exception as e:
+        logger.warning(f"Failed to generate AI-based folder name, falling back to timestamp: {e}")
+        # Fallback to just timestamp if AI call fails
+        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        return now
 
 
 def save_original_requirements(folder_path: str, original_text: str) -> None:
@@ -103,14 +126,14 @@ def save_subtasks(folder_path: str, tasks_data: Any) -> None:
         raise
 
 
-def save_task_results(original: str, tasks_result: Any) -> Dict[str, Any]:
+def save_task_results(original: str, tasks_result: Any, tasks_id: Any) -> Dict[str, Any]:
     try:
         # Ensure tasks folder exists
         tasks_base = ensure_tasks_folder()
         
-        # Generate folder name and create it
-        folder_name = generate_task_folder_name()
-        task_folder_path = Path(tasks_base) / folder_name
+        # Generate AI-based folder name from original task description
+        folder_name = generate_task_folder_name_from_description(original)
+        task_folder_path = Path(tasks_base) / f'{tasks_id}_{folder_name}'
         task_folder_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created task folder: {task_folder_path}")
         

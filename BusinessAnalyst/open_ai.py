@@ -1,7 +1,7 @@
 import json
 import re
 import os
-from constants import SYSTEM_CONTENT
+from constants import PROJECT_MANAGER_SYSTEM_CONTENT
 
 try:
     import openai
@@ -24,7 +24,7 @@ def _call_openai_chat(prompt: str, model: str = "gpt-4o", max_tokens: int = 800)
     resp = openai.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": SYSTEM_CONTENT},
+            {"role": "system", "content": PROJECT_MANAGER_SYSTEM_CONTENT},
             {"role": "user", "content": prompt},
         ],
         max_tokens=max_tokens,

@@ -1,6 +1,5 @@
 version: '3.8'
 
-# Set explicit project name to ensure volume is named 'impactra_data' (not 'impactra_impactra_data')
 name: impactra
 
 services:
@@ -16,10 +15,9 @@ services:
       - N8N_BASIC_AUTH_USER=admin
       - N8N_BASIC_AUTH_PASSWORD=123456
       - N8N_EDITOR_BASE_URL=http://localhost:5678/
-      - N8N_LOG_LEVEL=info
-      - N8N_DATA_FOLDER=/data
+      - N8N_LOG_LEVEL=info      
     volumes:
-      - data:/data
+      - data:/home/node/.n8n
     restart: unless-stopped
 
   business-analyst:
@@ -37,6 +35,6 @@ services:
     depends_on:
       - n8n
 
-volumes:
+volumes:  
   data:
     driver: local
