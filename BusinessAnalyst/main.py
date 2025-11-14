@@ -32,7 +32,7 @@ def receive_message():
         except Exception as storage_error:
             app.logger.warning(f"Failed to save task results to volume: {storage_error}")
         
-        return jsonify({"original": raw, "tasks": result, "taskId": task_id}), 200
+        return jsonify({"taskId": task_id}), 200
     except Exception as e:
         app.logger.exception("Failed to analyze message")
         return jsonify({"error": "internal_error", "details": str(e)}), 500

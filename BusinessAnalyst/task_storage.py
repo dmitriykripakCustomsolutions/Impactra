@@ -45,18 +45,13 @@ def generate_task_folder_name_from_description(original: str) -> str:
         if len(ai_folder_name) > 50:
             ai_folder_name = ai_folder_name[:50]
         
-        # Combine timestamp with AI-generated name
-        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        folder_name = f"{ai_folder_name}_{now}"
-        
-        logger.info(f"Generated AI-based folder name: {folder_name}")
-        return folder_name
+        logger.info(f"Generated AI-based folder name component: {ai_folder_name}")
+        return ai_folder_name
     
     except Exception as e:
-        logger.warning(f"Failed to generate AI-based folder name, falling back to timestamp: {e}")
-        # Fallback to just timestamp if AI call fails
-        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        return now
+        logger.warning(f"Failed to generate AI-based folder name, falling back to 'task': {e}")
+        # Fallback to generic task name if AI call fails
+        return "task"
 
 
 def save_original_requirements(folder_path: str, original_text: str) -> None:
@@ -112,7 +107,7 @@ def save_subtasks(folder_path: str, tasks_data: Any) -> None:
                 if not safe_task_name:
                     safe_task_name = f"task_{idx}"
                 
-                file_path = Path(folder_path) / f"{safe_task_name}.json"
+                file_path = Path(folder_path) / f"{safe_task_name}_subtask_{idx}.json"
                 file_path.write_text(json.dumps(task, indent=2), encoding="utf-8")
                 logger.info(f"Saved task to: {file_path}")
             else:
@@ -126,14 +121,36 @@ def save_subtasks(folder_path: str, tasks_data: Any) -> None:
         raise
 
 
-def save_task_results(original: str, tasks_result: Any, tasks_id: Any) -> Dict[str, Any]:
+def save_task_results(original: str, tasks_result: Any, task_id: str = None) -> Dict[str, Any]:
+    """
+    Main function to orchestrate saving task results.
+    Creates a dated folder with AI-generated name, saves original requirements and all subtasks.
+    
+    Args:
+        original: The original raw task requirements text
+        tasks_result: The tasks array data (string or list)
+        task_id: Optional task identifier to include in folder name
+        
+    Returns:
+        Dict with status, folder_path, and any error details
+    """
     try:
         # Ensure tasks folder exists
         tasks_base = ensure_tasks_folder()
         
-        # Generate AI-based folder name from original task description
-        folder_name = generate_task_folder_name_from_description(original)
-        task_folder_path = Path(tasks_base) / f'{tasks_id}_{folder_name}'
+        # Generate timestamp
+        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        
+        # Generate AI-based name component from original task description
+        ai_folder_name = generate_task_folder_name_from_description(original)
+        
+        # Build folder name: timestamp_ai_name or timestamp_ai_name_task_id
+        if task_id:
+            folder_name = f"{ai_folder_name}_{task_id}_{now}"
+        else:
+            folder_name = f"{ai_folder_name}_{now}"
+        
+        task_folder_path = Path(tasks_base) / folder_name
         task_folder_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created task folder: {task_folder_path}")
         
