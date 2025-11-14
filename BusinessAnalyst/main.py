@@ -1,13 +1,13 @@
 import logging
+import uuid
 
 from flask import Flask, request, jsonify
 from cerebras_ai import _call_cerebras_ai_chat
 from open_ai import _call_openai_chat
+from task_storage import save_task_results
 
 
 app = Flask(__name__)
-
-
 
 @app.route('/receive-message', methods=['POST'])
 def receive_message():
@@ -23,7 +23,16 @@ def receive_message():
 
     try:
         result = _call_cerebras_ai_chat(raw)
-        return jsonify({"original": raw, "tasks": result}), 200
+        task_id=str(uuid.uuid4())
+        
+        # Save task creation results to volume
+        try:
+            storage_result = save_task_results(original=raw, tasks_result=result)
+            app.logger.info(f"Task storage: {storage_result}")
+        except Exception as storage_error:
+            app.logger.warning(f"Failed to save task results to volume: {storage_error}")
+        
+        return jsonify({"original": raw, "tasks": result, "taskId": task_id}), 200
     except Exception as e:
         app.logger.exception("Failed to analyze message")
         return jsonify({"error": "internal_error", "details": str(e)}), 500

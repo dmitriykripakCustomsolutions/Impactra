@@ -1,0 +1,42 @@
+version: '3.8'
+
+# Set explicit project name to ensure volume is named 'impactra_data' (not 'impactra_impactra_data')
+name: impactra
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_PORT=5678
+      - N8N_HOST=0.0.0.0
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=123456
+      - N8N_EDITOR_BASE_URL=http://localhost:5678/
+      - N8N_LOG_LEVEL=info
+      - N8N_DATA_FOLDER=/data
+    volumes:
+      - data:/data
+    restart: unless-stopped
+
+  business-analyst:
+    build: ./BusinessAnalyst
+    image: business-analyst:latest
+    container_name: business-analyst
+    ports:
+      - "5000:5000"
+    environment:
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - data:/data
+    restart: unless-stopped
+    depends_on:
+      - n8n
+
+volumes:
+  data:
+    driver: local
