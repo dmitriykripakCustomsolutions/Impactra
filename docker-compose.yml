@@ -34,6 +34,21 @@ services:
     restart: unless-stopped
     depends_on:
       - n8n
+  
+  programmer:
+    build: ./Programmer
+    image: programmer:latest
+    container_name: programmer
+    ports:
+      - "5001:5001"
+    environment:
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - data:/data
+    restart: unless-stopped
+    depends_on:
+      - n8n
 
 volumes:  
   data:

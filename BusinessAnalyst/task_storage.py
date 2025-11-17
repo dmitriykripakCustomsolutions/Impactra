@@ -122,18 +122,6 @@ def save_subtasks(folder_path: str, tasks_data: Any) -> None:
 
 
 def save_task_results(original: str, tasks_result: Any, task_id: str = None) -> Dict[str, Any]:
-    """
-    Main function to orchestrate saving task results.
-    Creates a dated folder with AI-generated name, saves original requirements and all subtasks.
-    
-    Args:
-        original: The original raw task requirements text
-        tasks_result: The tasks array data (string or list)
-        task_id: Optional task identifier to include in folder name
-        
-    Returns:
-        Dict with status, folder_path, and any error details
-    """
     try:
         # Ensure tasks folder exists
         tasks_base = ensure_tasks_folder()

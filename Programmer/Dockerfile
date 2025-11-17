@@ -9,6 +9,9 @@ COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Mount volume for persistent task storage
+VOLUME ["/data"]
+
 EXPOSE 5001
 
 CMD ["python", "main.py"]

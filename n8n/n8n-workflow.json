@@ -8,10 +8,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        208,
-        32
+        -1648,
+        320
       ],
-      "id": "e78c3547-384f-4bce-9993-629904ce4b25",
+      "id": "a6ad5345-e340-44cb-b32d-8f59677d390d",
       "name": "Respond to Slack Verification",
       "disabled": true
     },
@@ -33,10 +33,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        464,
-        0
+        -1392,
+        288
       ],
-      "id": "addb3852-a528-4c03-9c14-21d2e37fa657"
+      "id": "3f16103a-2a94-4a6e-9d2b-b6d7515d3f9c"
     },
     {
       "parameters": {
@@ -44,16 +44,16 @@
         "url": "http://host.docker.internal:5001/process-task",
         "jsonParameters": true,
         "options": {},
-        "bodyParametersJson": "={{ $json.tasks }}"
+        "bodyParametersJson": "={{ { taskId: $json.taskId } }}"
       },
       "name": "Programmer: Technical Task Send",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        720,
-        0
+        -1136,
+        288
       ],
-      "id": "b7c5cc3d-a383-4b68-af44-c54bfef41e89"
+      "id": "e83da780-5941-4af7-8fcf-921551181d15"
     },
     {
       "parameters": {
@@ -67,10 +67,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        928,
-        0
+        -928,
+        288
       ],
-      "id": "d064e59c-c087-49f4-8f5d-19ee6086e44e"
+      "id": "bb3d087b-42ae-40c2-a054-a007fe347885"
     },
     {
       "parameters": {
@@ -84,10 +84,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        1376,
-        0
+        -480,
+        288
       ],
-      "id": "306b8b89-30bb-466a-9ad2-9eae0da10a8a"
+      "id": "fb59e55a-84ed-4a1d-b83f-0a379091961e"
     },
     {
       "parameters": {
@@ -100,10 +100,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        1632,
-        -16
+        -224,
+        272
       ],
-      "id": "201bf5e8-2a08-4c36-a5cc-e06dece91d98",
+      "id": "62f0761b-879f-4561-891c-badfe51f6363",
       "disabled": true
     },
     {
@@ -120,15 +120,15 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        1824,
-        0
+        -32,
+        288
       ],
-      "id": "f1303a14-5584-4420-b649-c7b043c85b2c",
+      "id": "f938a49d-68f3-4834-ac6c-0025b6e89e7e",
       "name": "Send a message",
       "webhookId": "45abbc3d-4518-4137-85c3-d493c9950ca5",
       "credentials": {
         "slackApi": {
-          "id": "lnQR4ZnQgVz6Jbp5",
+          "id": "NmTy4QGcVr0qKxQ0",
           "name": "Slack account"
         }
       }
@@ -144,10 +144,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        0
+        -1856,
+        288
       ],
-      "id": "2333a718-7bac-4c85-bced-71e74e7bc15b",
+      "id": "4e5b7505-797a-4e87-9d83-46b1a8f889dc",
       "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb",
       "alwaysOutputData": false
     },
@@ -163,10 +163,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        1168,
-        0
+        -688,
+        288
       ],
-      "id": "f56d0e08-0491-4ded-a642-91c93ed49bce"
+      "id": "caa64da8-04b1-46e5-bd45-75e585506e75"
     }
   ],
   "pinData": {},
@@ -264,11 +264,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ab5c4cf8-8246-4b67-8cdb-11005c3d4346",
+  "versionId": "cac9af48-a169-4cd3-95e9-56b1eaa85a1f",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "4352f804d67fe822106d2b772100f63681ce2cdfe768e92e566402a4b76a14ad"
+    "instanceId": "feac75f7d6aaba803e56c3532acff7622cbab3f30c2fa9b687f10fe3696c5941"
   },
-  "id": "IkSUVFXB6riy1bA2",
+  "id": "0EWeKPPgDoSmZuNA",
   "tags": []
 }
