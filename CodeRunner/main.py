@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 def receive_message():
     try:
         data = request.get_json()
-        sourceCode = data.get('sourceCode', '')
-        if not sourceCode:
+        task_id = data.get('taskId')
+        if not task_id:
             return jsonify({
-                "error": "Invalid request. 'completionResult' field is required.",
+                "error": "Invalid request. 'task_id' field is required.",
                 "compiled": False
             }), 400
-
+        
         result = execute_code_safely(sourceCode)
         return jsonify({"result": result})
 

@@ -5,13 +5,19 @@ ENV CEREBRAS_API_KEY=""
 
 WORKDIR /app
 
-COPY . /app
+# Copy the shared module
+COPY shared /app/shared
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy Programmer service code
+COPY Programmer /app/Programmer
+
+# Install dependencies
+RUN pip install --no-cache-dir -r /app/Programmer/requirements.txt
 
 # Mount volume for persistent task storage
 VOLUME ["/data"]
 
 EXPOSE 5001
 
-CMD ["python", "main.py"]
+CMD ["python", "/app/Programmer/main.py"]
+
