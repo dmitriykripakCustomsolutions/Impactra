@@ -2,7 +2,7 @@ import json
 import logging
 from flask import Flask, request, jsonify
 from cerebras_ai import _call_cerebras_ai_chat
-from file_reader import get_subtasks_for_processing
+from file_worker import get_subtasks_for_processing, save_subtask_source_code
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,6 +42,9 @@ def process_task():
             
             # Send to Cerebras AI
             result = _call_cerebras_ai_chat(subtask_json)
+            
+            # Save subtask source code
+            save_subtask_source_code(result, task_id, i)
             
             # Wrap result with metadata
             processed_result = {
