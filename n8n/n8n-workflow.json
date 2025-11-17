@@ -137,19 +137,20 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "slack-webhook",
-        "responseMode": "lastNode",
-        "options": {}
+        "responseMode": "onReceived",
+        "options": {
+          "responseCode": 200,
+          "responseData": "Processing...",
+          "responseContentType": "application/json"
+        }
       },
       "name": "Webhook: Slack Raw Technical Task Receiving",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [
-        -1856,
-        288
-      ],
+      "position": [-1856, 288],
       "id": "4e5b7505-797a-4e87-9d83-46b1a8f889dc",
       "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb",
-      "alwaysOutputData": false
+      "alwaysOutputData": true
     },
     {
       "parameters": {
