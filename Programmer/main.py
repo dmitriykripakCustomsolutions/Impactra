@@ -1,8 +1,13 @@
 import json
 import logging
+import sys
+from pathlib import Path
 from flask import Flask, request, jsonify
 from cerebras_ai import _call_cerebras_ai_chat
-from file_worker import get_subtasks_for_processing, save_subtask_source_code
+
+# Add parent directory to path to import shared module
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from shared import get_subtasks_for_processing, save_subtask_source_code
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
