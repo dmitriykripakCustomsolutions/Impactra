@@ -28,16 +28,25 @@ def find_task_folder(task_id: str) -> str:
         raise FileNotFoundError(f"Data path does not exist: {DATA_BASE_PATH}")
     
     try:
-        for folder_name in os.listdir(DATA_BASE_PATH):
+        # List all contents in DATA_BASE_PATH for debugging
+        all_items = os.listdir(DATA_BASE_PATH)
+        logger.info(f"Contents of {DATA_BASE_PATH}: {all_items}")
+        
+        for folder_name in all_items:
+            folder_path = os.path.join(DATA_BASE_PATH, folder_name)
+            logger.debug(f"Checking: {folder_name} (full path: {folder_path}, is_dir: {os.path.isdir(folder_path)})")
+            
             if task_id in folder_name:
-                folder_path = os.path.join(DATA_BASE_PATH, folder_name)
                 if os.path.isdir(folder_path):
                     logger.info(f"Found task folder: {folder_path}")
                     return folder_path
+                else:
+                    logger.warning(f"Found matching name '{folder_name}' but it's not a directory")
     except Exception as e:
         logger.error(f"Error searching for task folder: {e}")
         raise
     
+    logger.error(f"Task ID '{task_id}' not found in any folder name at {DATA_BASE_PATH}")
     raise FileNotFoundError(f"No folder found containing taskId: {task_id}")
 
 
