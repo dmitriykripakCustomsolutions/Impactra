@@ -1,0 +1,279 @@
+{
+  "name": "Slack Task Processing Worker",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7c864081-df51-4327-8e6a-f3ed92fd5bd5",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-webhook",
+        "options": {}
+      },
+      "id": "f69f1fb4-56c0-42de-9195-bad7f30a0491",
+      "name": "Webhook: Slack Incoming",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1232,
+        80
+      ],
+      "webhookId": "0c25f5f0-abad-4db5-accb-7888423113b6"
+    },
+    {
+      "parameters": {
+        "workflowId": "0EWeKPPgDoSmZuNA",
+        "options": {}
+      },
+      "id": "feacf5e8-1afa-4c87-bbab-42bb252d3786",
+      "name": "Execute Task Processor",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json }];"
+      },
+      "id": "b426fab6-084b-4143-9d14-7228dc89f1a2",
+      "name": "Entry Data (Auto)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1232,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5000/receive-message",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "message",
+              "value": "={{ $json.body.message }}"
+            }
+          ]
+        }
+      },
+      "id": "c3fb8861-e984-4bd6-a096-4d776c3b13fb",
+      "name": "Business Analyst: Raw Technical Task Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -928,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5001/process-task",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ { \"taskId\": $json.taskId } }}"
+      },
+      "id": "aa049335-2173-473e-a6c5-36ee65681245",
+      "name": "Programmer: Technical Task Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5002/run-code",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ { \"taskId\": $json.taskId } }}"
+      },
+      "id": "7b79314b-2715-4560-9702-e98fb3dc763a",
+      "name": "Code Runner: Source Code Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5003/test-source-code",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ $json.result }}"
+      },
+      "id": "9f7ec399-7cf7-47c4-9da2-2bd6eff247ec",
+      "name": "Tester: Test Source Code",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5001/receive-code-runner-result",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ $json.test_results }}"
+      },
+      "id": "9b5435ae-3e0a-4bda-ac36-8b090cb8f203",
+      "name": "Programmer: Code Runner Result Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09PH87TE0P",
+          "mode": "id"
+        },
+        "text": "={{ $json.task }}\n\n{{ $json.completionResult }}",
+        "otherOptions": {}
+      },
+      "id": "9f819ac6-8980-441d-b8bb-0751058edf13",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        304
+      ],
+      "webhookId": "d924280a-aaf5-4c96-954e-87baba85802b",
+      "credentials": {
+        "slackApi": {
+          "id": "NmTy4QGcVr0qKxQ0",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook: Slack Incoming": {
+      "main": [
+        [
+          {
+            "node": "Execute Task Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entry Data (Auto)": {
+      "main": [
+        [
+          {
+            "node": "Business Analyst: Raw Technical Task Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analyst: Raw Technical Task Send": {
+      "main": [
+        [
+          {
+            "node": "Programmer: Technical Task Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programmer: Technical Task Send": {
+      "main": [
+        [
+          {
+            "node": "Code Runner: Source Code Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Runner: Source Code Send": {
+      "main": [
+        [
+          {
+            "node": "Tester: Test Source Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tester: Test Source Code": {
+      "main": [
+        [
+          {
+            "node": "Programmer: Code Runner Result Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programmer: Code Runner Result Send": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Entry Data (Auto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "56df208d-9379-43dd-a0c1-1440b9d1b12d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "feac75f7d6aaba803e56c3532acff7622cbab3f30c2fa9b687f10fe3696c5941"
+  },
+  "id": "0EWeKPPgDoSmZuNA",
+  "tags": []
+}
