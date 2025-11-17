@@ -61,7 +61,7 @@
         "url": "http://host.docker.internal:5002/run-code",
         "jsonParameters": true,
         "options": {},
-        "bodyParametersJson": "={{ $json.completionResult }}"
+        "bodyParametersJson": "={{ { taskId: $json.taskId } }}"
       },
       "name": "Code Runner: Source Code Send",
       "type": "n8n-nodes-base.httpRequest",
@@ -264,7 +264,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "cac9af48-a169-4cd3-95e9-56b1eaa85a1f",
+  "versionId": "55876226-0046-4af0-9a6e-32a14ae16c73",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "feac75f7d6aaba803e56c3532acff7622cbab3f30c2fa9b687f10fe3696c5941"
