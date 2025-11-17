@@ -1,0 +1,52 @@
+{
+  "name": "Slack Incoming Webhook Listener",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-webhook",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "WebhookSlack",
+      "name": "Webhook: Slack Incoming",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "task-worker",
+        "options": {
+          "waitForWebhook": false
+        }
+      },
+      "id": "ExecWorker",
+      "name": "Execute Task Processor",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Slack Incoming": {
+      "main": [
+        [
+          {
+            "node": "Execute Task Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

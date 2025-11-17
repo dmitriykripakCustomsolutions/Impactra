@@ -1,0 +1,186 @@
+{
+  "id": "task-worker",
+  "name": "Slack Task Processing Worker",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json }];"
+      },
+      "id": "EntryNode",
+      "name": "Entry Data (Auto)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5000/receive-message",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "message",
+              "value": "={{ $json.body.message }}"
+            }
+          ]
+        }
+      },
+      "id": "BA_Send",
+      "name": "Business Analyst: Raw Technical Task Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        600,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5001/process-task",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ { \"taskId\": $json.taskId } }}"
+      },
+      "id": "Prog_Send",
+      "name": "Programmer: Technical Task Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        900,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5002/run-code",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ { \"taskId\": $json.taskId } }}"
+      },
+      "id": "Runner",
+      "name": "Code Runner: Source Code Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5003/test-source-code",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ $json.result }}"
+      },
+      "id": "Tester",
+      "name": "Tester: Test Source Code",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:5001/receive-code-runner-result",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ $json.test_results }}"
+      },
+      "id": "SendResults",
+      "name": "Programmer: Code Runner Result Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09PH87TE0P",
+          "mode": "id"
+        },
+        "text": "={{ $json.task }}\n\n{{ $json.completionResult }}",
+        "otherOptions": {}
+      },
+      "id": "SlackSend",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2100,
+        100
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "NmTy4QGcVr0qKxQ0",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Entry Data (Auto)": {
+      "main": [
+        [
+          {
+            "node": "Business Analyst: Raw Technical Task Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analyst: Raw Technical Task Send": {
+      "main": [
+        [
+          { "node": "Programmer: Technical Task Send", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Programmer: Technical Task Send": {
+      "main": [
+        [
+          { "node": "Code Runner: Source Code Send", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Code Runner: Source Code Send": {
+      "main": [
+        [
+          { "node": "Tester: Test Source Code", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Tester: Test Source Code": {
+      "main": [
+        [
+          { "node": "Programmer: Code Runner Result Send", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Programmer: Code Runner Result Send": {
+      "main": [
+        [
+          { "node": "Send a message", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
