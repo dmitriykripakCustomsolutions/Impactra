@@ -2,11 +2,19 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY . /app
-COPY requirements.txt .
+# Copy the shared module
+COPY shared /app/shared
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy CodeRunner service code
+COPY CodeRunner /app/CodeRunner
+
+# Install dependencies
+RUN pip install --no-cache-dir -r /app/CodeRunner/requirements.txt
+
+# Mount volume for persistent task storage
+VOLUME ["/data"]
 
 EXPOSE 5002
 
-CMD ["python", "main.py"]
+CMD ["python", "/app/CodeRunner/main.py"]
+

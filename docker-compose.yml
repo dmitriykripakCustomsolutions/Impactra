@@ -50,6 +50,21 @@ services:
     depends_on:
       - n8n
 
+  code-runner:
+    build: ./CodeRunner
+    image: code-runner:latest
+    container_name: code-runner
+    ports:
+      - "5002:5002"
+    environment:
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - data:/data
+    restart: unless-stopped
+    depends_on:
+      - n8n
+
 volumes:  
   data:
     driver: local
