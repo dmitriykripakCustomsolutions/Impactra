@@ -51,7 +51,9 @@ services:
       - n8n
 
   code-runner:
-    build: ./CodeRunner
+    build:
+      context: .
+      dockerfile: CodeRunner/Dockerfile
     image: code-runner:latest
     container_name: code-runner
     ports:
