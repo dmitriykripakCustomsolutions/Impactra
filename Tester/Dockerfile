@@ -1,14 +1,15 @@
 FROM python:3.12-slim
 
-ENV OPENAI_API_KEY=""
-ENV CEREBRAS_API_KEY=""
-
 WORKDIR /app
 
-COPY . /app
+# Copy the shared module
+COPY shared /app/shared
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY Tester /app/Tester
+
+RUN pip install --no-cache-dir -r /app/Tester/requirements.txt
 
 EXPOSE 5003
 
-CMD ["python", "main.py"]
+# Use absolute path to avoid issues if WORKDIR is overridden by a volume
+CMD ["python", "/app/Tester/main.py"]
