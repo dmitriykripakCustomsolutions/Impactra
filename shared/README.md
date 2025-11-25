@@ -16,7 +16,7 @@ File and task management utilities:
 
 ### Constants
 - **`DATA_BASE_PATH`**: Base path for task data volume (default: `/data/tasks`)
-- **`RESULT_ARTIFACTS_FOLDER`**: Subfolder name for result artifacts (default: `result artifacts`)
+- **`RESULT_ARTIFACTS_FOLDER`**: Subfolder name for Result artifacts (default: `Result artifacts`)
 - **`LANGUAGE_PATTERNS`**: Dictionary of regex patterns for language detection
 
 ## Usage

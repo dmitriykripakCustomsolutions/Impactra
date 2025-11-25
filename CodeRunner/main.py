@@ -23,11 +23,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Constants
-RESULT_ARTIFACTS_FOLDER = "result artifacts"
+RESULT_ARTIFACTS_FOLDER = "Result artifacts"
 
 def get_source_code_files(task_id: str):
     """
-    Find and read all source code files from the task's result artifacts folder.
+    Find and read all source code files from the task's Result artifacts folder.
     Returns a list of tuples: (filename, source_code)
     """
     try:
@@ -89,7 +89,7 @@ def execute_all_subtask_code(task_id: str):
         # Get all source code files
         source_files = get_source_code_files(task_id)
 
-        # Determine the task folder and result artifacts path so we can write per-subtask results
+        # Determine the task folder and Result artifacts path so we can write per-subtask results
         task_folder = find_task_folder(task_id)
         result_artifacts_path = Path(task_folder) / RESULT_ARTIFACTS_FOLDER
         
@@ -122,11 +122,11 @@ def execute_all_subtask_code(task_id: str):
                     # fallback: use current length of execution_results - 1 as index
                     subtask_index = len(execution_results) - 1
 
-                # Ensure result artifacts folder exists
+                # Ensure Result artifacts folder exists
                 try:
                     result_artifacts_path.mkdir(parents=True, exist_ok=True)
                 except Exception as e:
-                    logger.warning(f"Could not create result artifacts folder {result_artifacts_path}: {e}")
+                    logger.warning(f"Could not create Result artifacts folder {result_artifacts_path}: {e}")
 
                 # Write the per-subtask result to JSON file
                 try:

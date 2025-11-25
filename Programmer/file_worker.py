@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 DATA_BASE_PATH = "/data/tasks"
 
 # Result artifacts folder name
-RESULT_ARTIFACTS_FOLDER = "result artifacts"
+RESULT_ARTIFACTS_FOLDER = "Result artifacts"
 
 # Language detection patterns - maps common keywords/patterns to file extensions
 LANGUAGE_PATTERNS = {
@@ -222,7 +222,7 @@ def save_subtask_source_code(source_code: str, task_id: str, subtask_index: int)
         # Find the task folder
         task_folder = find_task_folder(task_id)
         
-        # Create result artifacts subfolder if it doesn't exist
+        # Create Result artifacts subfolder if it doesn't exist
         result_artifacts_path = os.path.join(task_folder, RESULT_ARTIFACTS_FOLDER)
         os.makedirs(result_artifacts_path, exist_ok=True)
         logger.info(f"Result artifacts folder ready: {result_artifacts_path}")

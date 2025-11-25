@@ -4,8 +4,51 @@ import sys
 import io
 import traceback
 import types
+import re
 from typing import Dict, List, Any, Tuple, Optional
 from cerebras_ai import _call_cerebras_ai_chat
+
+
+def sanitize_code(raw_code: str) -> str:
+    """
+    Remove markdown code fences, language specifiers, and unnecessary whitespace from code.
+    Copied from CodeRunner's `code_executor.sanitize_code` to ensure consistent preprocessing.
+    """
+    if raw_code is None:
+        return ""
+
+    # Ensure we are working with a str
+    if not isinstance(raw_code, str):
+        try:
+            raw_code = str(raw_code)
+        except Exception:
+            return ""
+
+    s = raw_code.strip()
+
+    # If the code is wrapped in quotes (single or double), remove matching outer quotes repeatedly
+    while len(s) >= 2 and ((s[0] == '"' and s[-1] == '"') or (s[0] == "'" and s[-1] == "'")):
+        s = s[1:-1].strip()
+
+    # If the string contains literal escape sequences like \n and no real newlines, decode them
+    # This handles cases where the snippet was passed as an escaped literal: "\n"
+    if "\\n" in s and "\n" not in s:
+        try:
+            s = bytes(s, "utf-8").decode("unicode_escape")
+        except Exception:
+            # If decoding fails, keep the original
+            pass
+
+    # Remove leading triple backticks and optional language (e.g., ```python\n)
+    s = re.sub(r"^```[ \t]*[a-zA-Z0-9_+\-]*[ \t]*\n?", "", s)
+    # Remove trailing triple backticks
+    s = re.sub(r"\n?```[ \t]*$", "", s)
+
+    # If any leftover leading/trailing backticks remain (1-3), strip them
+    s = re.sub(r"^`{1,3}", "", s)
+    s = re.sub(r"`{1,3}$", "", s)
+
+    return s.strip()
 
 
 class TestGenerator:
@@ -389,7 +432,9 @@ def generate_and_run_unit_tests(source_code: str, use_ai: bool = True) -> str:
         JSON string containing array of test results
     """
     try:
-        generator = TestGenerator(source_code)
+        # Sanitize source code the same way CodeRunner does to remove fences/encoding artifacts
+        sanitized_source = sanitize_code(source_code)
+        generator = TestGenerator(sanitized_source)
         results = generator.generate_and_run_tests(use_ai=use_ai)
         
         # Clean up results (remove error field if present and test passed)
