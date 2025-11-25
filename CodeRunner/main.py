@@ -88,6 +88,10 @@ def execute_all_subtask_code(task_id: str):
     try:
         # Get all source code files
         source_files = get_source_code_files(task_id)
+
+        # Determine the task folder and result artifacts path so we can write per-subtask results
+        task_folder = find_task_folder(task_id)
+        result_artifacts_path = Path(task_folder) / RESULT_ARTIFACTS_FOLDER
         
         if not source_files:
             return {
@@ -109,6 +113,30 @@ def execute_all_subtask_code(task_id: str):
                     "error": result.get("error", ""),
                     "sourceCode": result.get("sourceCode", "")
                 })
+                # Attempt to derive subtask index from filename; fall back to enumerating
+                try:
+                    subtask_index = extract_order_from_filename(filename)
+                    if not isinstance(subtask_index, int):
+                        raise ValueError
+                except Exception:
+                    # fallback: use current length of execution_results - 1 as index
+                    subtask_index = len(execution_results) - 1
+
+                # Ensure result artifacts folder exists
+                try:
+                    result_artifacts_path.mkdir(parents=True, exist_ok=True)
+                except Exception as e:
+                    logger.warning(f"Could not create result artifacts folder {result_artifacts_path}: {e}")
+
+                # Write the per-subtask result to JSON file
+                try:
+                    result_item = execution_results[-1]
+                    output_file = result_artifacts_path / f"run result_subtask_{subtask_index}.json"
+                    with open(output_file, 'w', encoding='utf-8') as out_f:
+                        json.dump(result_item, out_f, ensure_ascii=False, indent=2)
+                    logger.info(f"Saved run result to {output_file}")
+                except Exception as e:
+                    logger.error(f"Failed to write run result for {filename}: {e}")
                 logger.info(f"✓ Completed execution of {filename}")
             except Exception as e:
                 logger.error(f"Failed to execute {filename}: {e}")
