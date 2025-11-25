@@ -131,7 +131,7 @@ def execute_all_subtask_code(task_id: str):
                 # Write the per-subtask result to JSON file
                 try:
                     result_item = execution_results[-1]
-                    output_file = result_artifacts_path / f"run result_subtask_{subtask_index}.json"
+                    output_file = result_artifacts_path / f"Run result_subtask_{subtask_index}.json"
                     with open(output_file, 'w', encoding='utf-8') as out_f:
                         json.dump(result_item, out_f, ensure_ascii=False, indent=2)
                     logger.info(f"Saved run result to {output_file}")
