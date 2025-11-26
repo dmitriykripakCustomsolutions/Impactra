@@ -78,8 +78,24 @@ def test_source_code():
                 test_results = json.loads(test_results_json)
 
                 # Save each test result into separate files
-                for test_idx, test_obj in enumerate(test_results):
-                    out_name = f"Test result_subtask_{_extract_subtask_index(filename)}_test_{test_idx}.json"
+                # Support both formats: a list of test result objects, or a dict with a 'tests' list
+                if isinstance(test_results, dict) and isinstance(test_results.get('tests'), list):
+                    tests_list = test_results.get('tests', [])
+                elif isinstance(test_results, list):
+                    tests_list = test_results
+                else:
+                    # Unexpected format: wrap into a single-item list
+                    tests_list = [test_results]
+
+                for test_idx, test_obj in enumerate(tests_list):
+                    # Determine pass/fail from the test object
+                    is_passed = False
+                    if isinstance(test_obj, dict):
+                        is_passed = bool(test_obj.get('isTestPassed', False))
+
+                    prefix = "Passed " if is_passed else "Failed "
+
+                    out_name = f"{prefix}Test result_subtask_{_extract_subtask_index(filename)}_test_{test_idx}.json"
                     out_path = os.path.join(result_artifacts_path, out_name)
                     try:
                         with open(out_path, 'w', encoding='utf-8') as of:
