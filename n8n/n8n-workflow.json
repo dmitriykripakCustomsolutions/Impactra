@@ -81,7 +81,7 @@
         "url": "http://host.docker.internal:5001/receive-test-results",
         "jsonParameters": true,
         "options": {},
-        "bodyParametersJson": "={{ { allTestsPassed: $json.allTestsPassed } }}"
+        "bodyParametersJson": "={{ { allTestsPassed: $json.allTestsPassed, taskId: $('Programmer: Technical Task Send').item.json.taskId } }}"
       },
       "name": "Programmer: Code Runner Result Send",
       "type": "n8n-nodes-base.httpRequest",
@@ -91,6 +91,7 @@
         16
       ],
       "id": "8aaa2f18-7c70-4ffe-ac97-bac2ecbccdf6",
+      "disabled": true,
       "continueOnFail": true
     },
     {
@@ -98,7 +99,8 @@
         "requestMethod": "POST",
         "url": "http://host.docker.internal:5000/receive-task-completion-result",
         "jsonParameters": true,
-        "options": {}
+        "options": {},
+        "bodyParametersJson": "={{ { allTestsPassed: $('Tester: Test Source Code').item.json.allTestsPassed} }}"
       },
       "name": "Business Analyst: Task Completion Result Send",
       "type": "n8n-nodes-base.httpRequest",
@@ -108,7 +110,6 @@
         0
       ],
       "id": "d0909976-f743-4d22-b083-dc9cb118f555",
-      "disabled": true,
       "continueOnFail": true
     },
     {
@@ -272,7 +273,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5351bb08-8815-4843-835f-fb938c1f3489",
+  "versionId": "057fee89-9c65-4fd3-8a5e-cdc96cfb34be",
   "meta": {
     "instanceId": "feac75f7d6aaba803e56c3532acff7622cbab3f30c2fa9b687f10fe3696c5941"
   },
