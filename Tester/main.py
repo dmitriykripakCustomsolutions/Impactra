@@ -117,7 +117,32 @@ def test_source_code():
                     "error": str(e)
                 })
 
-        return jsonify({"test_results": aggregated_results}), 200
+        # Determine whether all tests passed across all source files
+        all_passed = True
+        for entry in aggregated_results:
+            tests = entry.get('tests', [])
+            # Normalize tests to a list regardless of format
+            if isinstance(tests, dict) and isinstance(tests.get('tests'), list):
+                tests_list = tests.get('tests', [])
+            elif isinstance(tests, list):
+                tests_list = tests
+            else:
+                tests_list = [tests]
+
+            for t in tests_list:
+                if isinstance(t, dict):
+                    if not bool(t.get('isTestPassed', False)):
+                        all_passed = False
+                        break
+                else:
+                    # Unexpected test item format — treat as failure
+                    all_passed = False
+                    break
+
+            if not all_passed:
+                break
+
+        return jsonify({"allTestsPassed": bool(all_passed)}), 200
 
     except FileNotFoundError as e:
         app.logger.error(f"Task folder not found for taskId {task_id}: {e}")

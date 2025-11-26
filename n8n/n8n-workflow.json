@@ -8,10 +8,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1648,
-        320
+        -1424,
+        48
       ],
-      "id": "a6ad5345-e340-44cb-b32d-8f59677d390d",
+      "id": "ee905405-8f79-4528-aa70-75ebb61413ad",
       "name": "Respond to Slack Verification",
       "disabled": true
     },
@@ -33,10 +33,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -1392,
-        288
+        -1168,
+        16
       ],
-      "id": "3f16103a-2a94-4a6e-9d2b-b6d7515d3f9c",
+      "id": "d79e6818-207f-4070-bca5-fbbc3739701c",
       "continueOnFail": true
     },
     {
@@ -51,10 +51,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -1136,
-        288
+        -912,
+        16
       ],
-      "id": "e83da780-5941-4af7-8fcf-921551181d15",
+      "id": "eeb906d0-a338-4d0b-bbb8-e4d2f019ef59",
       "continueOnFail": true
     },
     {
@@ -69,10 +69,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -928,
-        288
+        -704,
+        16
       ],
-      "id": "bb3d087b-42ae-40c2-a054-a007fe347885",
+      "id": "2dcac93f-9730-433a-b65f-6ecc00ef3e8c",
       "continueOnFail": true
     },
     {
@@ -81,16 +81,16 @@
         "url": "http://host.docker.internal:5001/receive-code-runner-result",
         "jsonParameters": true,
         "options": {},
-        "bodyParametersJson": "={{ $json.test_results }}"
+        "bodyParametersJson": "={{ { allTestsPassed: $json.allTestsPassed } }}"
       },
       "name": "Programmer: Code Runner Result Send",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -480,
-        288
+        -256,
+        16
       ],
-      "id": "fb59e55a-84ed-4a1d-b83f-0a379091961e",
+      "id": "8aaa2f18-7c70-4ffe-ac97-bac2ecbccdf6",
       "continueOnFail": true
     },
     {
@@ -104,10 +104,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -224,
-        272
+        0,
+        0
       ],
-      "id": "62f0761b-879f-4561-891c-badfe51f6363",
+      "id": "d0909976-f743-4d22-b083-dc9cb118f555",
       "disabled": true,
       "continueOnFail": true
     },
@@ -125,10 +125,10 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        -32,
-        288
+        192,
+        16
       ],
-      "id": "f938a49d-68f3-4834-ac6c-0025b6e89e7e",
+      "id": "4fcaeb40-363b-4fcb-bc66-e9d1d7c81297",
       "name": "Send a message",
       "webhookId": "45abbc3d-4518-4137-85c3-d493c9950ca5",
       "credentials": {
@@ -143,21 +143,18 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "slack-webhook",
-        "responseMode": "onReceived",
         "options": {
-          "responseCode": 200,
-          "responseData": "received",
-          "responseContentType": "application/json"
+          "responseData": "received"
         }
       },
       "name": "Webhook: Slack Raw Technical Task Receiving",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1856,
-        288
+        -1632,
+        16
       ],
-      "id": "4e5b7505-797a-4e87-9d83-46b1a8f889dc",
+      "id": "8d15461b-e008-4117-8a93-8a57698a76ba",
       "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb",
       "alwaysOutputData": true
     },
@@ -167,16 +164,16 @@
         "url": "http://host.docker.internal:5003/test-source-code",
         "jsonParameters": true,
         "options": {},
-        "bodyParametersJson": "={{ $json.result }}"
+        "bodyParametersJson": "={{ { taskId: $json.taskId } }}"
       },
       "name": "Tester: Test Source Code",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -688,
-        288
+        -464,
+        16
       ],
-      "id": "caa64da8-04b1-46e5-bd45-75e585506e75",
+      "id": "d1ee46a3-2b6a-4aa0-95fb-c3078ba26d8f",
       "continueOnFail": true
     }
   ],
@@ -256,13 +253,6 @@
             "type": "main",
             "index": 0
           }
-        ],
-        [
-          {
-            "node": "Business Analyst: Raw Technical Task Send",
-            "type": "main",
-            "index": 0
-          }
         ]
       ]
     },
@@ -282,11 +272,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "55876226-0046-4af0-9a6e-32a14ae16c73",
+  "versionId": "98a018de-8db4-4998-9834-3adf22a6fbde",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "feac75f7d6aaba803e56c3532acff7622cbab3f30c2fa9b687f10fe3696c5941"
   },
-  "id": "0EWeKPPgDoSmZuNA",
+  "id": "NYllLF4hBAOm41k5",
   "tags": []
 }

@@ -36,7 +36,9 @@ services:
       - n8n
   
   programmer:
-    build: ./Programmer
+    build: 
+      context: .
+      dockerfile: Programmer/Dockerfile
     image: programmer:latest
     container_name: programmer
     ports:
