@@ -78,7 +78,7 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://host.docker.internal:5001/receive-code-runner-result",
+        "url": "http://host.docker.internal:5001/receive-test-results",
         "jsonParameters": true,
         "options": {},
         "bodyParametersJson": "={{ { allTestsPassed: $json.allTestsPassed } }}"
@@ -272,7 +272,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "98a018de-8db4-4998-9834-3adf22a6fbde",
+  "versionId": "5351bb08-8815-4843-835f-fb938c1f3489",
   "meta": {
     "instanceId": "feac75f7d6aaba803e56c3532acff7622cbab3f30c2fa9b687f10fe3696c5941"
   },

@@ -84,8 +84,11 @@ def process_task():
         logger.exception(f"Failed to process task {task_id}")
         return jsonify({"error": "internal_error", "details": str(e)}), 500
 
-@app.route('/receive-code-runner-result', methods=['POST'])
-def receive_code_runner_result():    
+@app.route('/receive-test-results', methods=['POST'])
+def receive_test_results():    
+    # Now it receives test results from the tester:
+    # allTestsPassed - boolean and taskId - string
+    # We don't need this endpoint so far
     try:
         data = request.get_json(force=True)
     except Exception as e:
@@ -101,7 +104,7 @@ def receive_code_runner_result():
     
     logger.info(f"Received code runner result - Compiled: {compiled}, Error: {error}")
     
-    return jsonify({"message": "\'receive-code-runner-result\' Endpoint works"})
+    return jsonify({"message": "\'receive-test-results\' Endpoint works"})
 
 
 if __name__ == '__main__':
