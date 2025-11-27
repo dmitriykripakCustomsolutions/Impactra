@@ -15,24 +15,30 @@ app = Flask(__name__)
 @app.route('/receive-message', methods=['POST'])
 def receive_message():
     try:
-        # Support both JSON and form/multipart requests
-        if request.is_json:
-            data = request.get_json(force=True)
-            raw = data.get('message') or data.get('text') or ''
-            uploaded_file = None
-        else:
-            # form or multipart: message can be in form fields, file(s) in request.files
-            raw = request.form.get('message') or request.form.get('text') or ''
-            # prefer field name 'attachment', fallback to first file
-            uploaded_file = request.files.get('attachment') or (next(iter(request.files.values())) if request.files else None)
+        raw = (
+            request.form.get('message')
+            or request.form.get('text')
+            or request.values.get('message')
+            or request.values.get('text')
+            or ''
+        )
+
+        # Accept several common file field names; fallback to first file if present
+        uploaded_file = (
+            request.files.get('attachment')
+            or request.files.get('file')
+            or request.files.get('upload')
+            or (next(iter(request.files.values())) if request.files else None)
+        )
     except Exception as e:
-        app.logger.error(f"Failed to parse JSON payload: {e}")
-        return jsonify({"error": "invalid_json", "details": str(e)}), 400
-    
+        app.logger.error(f"Failed to parse multipart request: {e}")
+        return jsonify({"error": "invalid_request", "details": str(e)}), 400
+
     if not raw:
         return jsonify({"error": "No 'message' provided"}), 400
 
     try:
+        # Call AI to produce tasks
         result = _call_cerebras_ai_chat(raw)
         task_id = str(uuid.uuid4())
 
@@ -46,19 +52,19 @@ def receive_message():
 
         # If an uploaded file is present and storage succeeded, save the file into the same folder
         file_saved = None
-        try:
-            if uploaded_file and storage_result.get("status") == "success":
+        if uploaded_file and storage_result.get("status") == "success":
+            try:
                 folder_path = storage_result.get("folder_path")
                 if folder_path:
-                    filename = secure_filename(uploaded_file.filename) or "uploaded_file"
+                    filename = secure_filename(getattr(uploaded_file, 'filename', '') or 'uploaded_file')
                     target = Path(folder_path) / filename
                     uploaded_file.save(str(target))
                     app.logger.info(f"Saved uploaded file to: {target}")
                     file_saved = str(target)
                 else:
                     app.logger.warning("Storage reported success but no folder_path returned; uploaded file not saved")
-        except Exception as save_file_error:
-            app.logger.warning(f"Failed to save uploaded file: {save_file_error}")
+            except Exception as save_file_error:
+                app.logger.warning(f"Failed to save uploaded file: {save_file_error}")
 
         response_payload = {"taskId": task_id}
         if storage_result:

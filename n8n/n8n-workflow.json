@@ -8,23 +8,29 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1424,
-        48
+        -1008,
+        -160
       ],
-      "id": "ee905405-8f79-4528-aa70-75ebb61413ad",
+      "id": "784a050b-08de-4829-8f99-0390cf266b08",
       "name": "Respond to Slack Verification",
       "disabled": true
     },
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://host.docker.internal:5000/receive-message",
-        "options": {},
+        "url": "https://host.docker.internal:5000/receive-message",
+        "options": {
+          "bodyContentType": "multipart-form-data"
+        },
         "bodyParametersUi": {
           "parameter": [
             {
               "name": "message",
-              "value": "={{ $('Webhook: Slack Raw Technical Task Receiving').item.json.body.message }}"
+              "value": "={{ $json.body.message }}"
+            },
+            {
+              "name": "attachment",
+              "value": "={{  $binary.attachment0  }}"
             }
           ]
         }
@@ -33,10 +39,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -1168,
-        16
+        -752,
+        -192
       ],
-      "id": "d79e6818-207f-4070-bca5-fbbc3739701c",
+      "id": "7998f37d-8d53-4d99-9b4c-4d89ad2476aa",
       "continueOnFail": true
     },
     {
@@ -51,10 +57,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -912,
-        16
+        -496,
+        -192
       ],
-      "id": "eeb906d0-a338-4d0b-bbb8-e4d2f019ef59",
+      "id": "156aa4c5-1b40-40cc-9131-cd71f2683336",
       "continueOnFail": true
     },
     {
@@ -69,10 +75,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -704,
-        16
+        -288,
+        -192
       ],
-      "id": "2dcac93f-9730-433a-b65f-6ecc00ef3e8c",
+      "id": "7bff5c7f-387a-408b-b16e-a060cf655589",
       "continueOnFail": true
     },
     {
@@ -87,10 +93,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -256,
-        16
+        160,
+        -192
       ],
-      "id": "8aaa2f18-7c70-4ffe-ac97-bac2ecbccdf6",
+      "id": "7b9e4c03-a3f5-4b68-a671-4bc129a6189c",
       "disabled": true,
       "continueOnFail": true
     },
@@ -106,10 +112,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        0,
-        0
+        416,
+        -208
       ],
-      "id": "d0909976-f743-4d22-b083-dc9cb118f555",
+      "id": "dff4b107-7bfd-4805-8479-2bb31cc7c3c9",
       "continueOnFail": true
     },
     {
@@ -126,15 +132,15 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        192,
-        16
+        608,
+        -192
       ],
-      "id": "4fcaeb40-363b-4fcb-bc66-e9d1d7c81297",
+      "id": "f10f1d68-b8d6-43a1-9a1e-6198076893d1",
       "name": "Send a message",
       "webhookId": "45abbc3d-4518-4137-85c3-d493c9950ca5",
       "credentials": {
         "slackApi": {
-          "id": "NmTy4QGcVr0qKxQ0",
+          "id": "3g4OIyDfKfAPDVBK",
           "name": "Slack account"
         }
       },
@@ -144,18 +150,16 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "slack-webhook",
-        "options": {
-          "responseData": "received"
-        }
+        "options": {}
       },
       "name": "Webhook: Slack Raw Technical Task Receiving",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1632,
-        16
+        -1360,
+        0
       ],
-      "id": "8d15461b-e008-4117-8a93-8a57698a76ba",
+      "id": "a1e78f7f-b701-4634-8d5b-d0beba2ed13a",
       "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb",
       "alwaysOutputData": true
     },
@@ -171,11 +175,54 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -464,
-        16
+        -48,
+        -192
       ],
-      "id": "d1ee46a3-2b6a-4aa0-95fb-c3078ba26d8f",
+      "id": "4c0d7114-a56b-48f1-a3c7-6e3ab371e3b2",
       "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: $json,\n    binary: {\n      attachment: $('Webhook: Slack Raw Technical Task Receiving').item.binary.attachment\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        96
+      ],
+      "id": "0677029e-cd80-42ac-b2ce-48cc4d91dacd",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/receive-message",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachment",
+              "inputDataFieldName": "attachment"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Webhook: Slack Raw Technical Task Receiving').item.json.body.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -464,
+        64
+      ],
+      "id": "b9b13d87-9aa2-430a-96c1-a6e44a256784",
+      "name": "HTTP Request"
     }
   ],
   "pinData": {},
@@ -253,6 +300,11 @@
             "node": "Respond to Slack Verification",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -267,16 +319,27 @@
           }
         ]
       ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "057fee89-9c65-4fd3-8a5e-cdc96cfb34be",
+  "versionId": "6ca8f883-33a3-4f29-9745-dc8a6750d2fa",
   "meta": {
-    "instanceId": "feac75f7d6aaba803e56c3532acff7622cbab3f30c2fa9b687f10fe3696c5941"
+    "instanceId": "eb4e11312a6611954811887d5478d8a22c8d0c00be3623bed1a2b98c1e3d5e2b"
   },
-  "id": "NYllLF4hBAOm41k5",
+  "id": "N97dH9dZrXnHnF3a",
   "tags": []
 }
