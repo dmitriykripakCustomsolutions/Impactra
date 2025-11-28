@@ -8,8 +8,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1008,
-        -160
+        -1344,
+        -208
       ],
       "id": "784a050b-08de-4829-8f99-0390cf266b08",
       "name": "Respond to Slack Verification",
@@ -18,40 +18,10 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "https://host.docker.internal:5000/receive-message",
-        "options": {
-          "bodyContentType": "multipart-form-data"
-        },
-        "bodyParametersUi": {
-          "parameter": [
-            {
-              "name": "message",
-              "value": "={{ $json.body.message }}"
-            },
-            {
-              "name": "attachment",
-              "value": "={{  $binary.attachment0  }}"
-            }
-          ]
-        }
-      },
-      "name": "Business Analyst: Raw Technical Task Send",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 2,
-      "position": [
-        -752,
-        -192
-      ],
-      "id": "7998f37d-8d53-4d99-9b4c-4d89ad2476aa",
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "requestMethod": "POST",
         "url": "http://host.docker.internal:5001/process-task",
         "jsonParameters": true,
         "options": {},
-        "bodyParametersJson": "={{ { taskId: $json.taskId } }}"
+        "bodyParametersJson": "={{ { \"taskId\": $('Business Analyst: Raw Technical Task Send').item.json.taskId } }}"
       },
       "name": "Programmer: Technical Task Send",
       "type": "n8n-nodes-base.httpRequest",
@@ -188,11 +158,42 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -912,
-        96
+        -1184,
+        -224
       ],
       "id": "0677029e-cd80-42ac-b2ce-48cc4d91dacd",
       "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://host.docker.internal:5000/receive-message",
+        "options": {
+          "bodyContentType": "multipart-form-data"
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "message",
+              "value": "={{ $json.body.message }}"
+            },
+            {
+              "name": "attachment",
+              "value": "={{  $binary.attachment0  }}"
+            }
+          ]
+        }
+      },
+      "name": "Business Analyst: Raw Technical Task Send - To Delete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        -192
+      ],
+      "id": "7998f37d-8d53-4d99-9b4c-4d89ad2476aa",
+      "disabled": true,
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -218,11 +219,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -464,
-        64
+        -1008,
+        -208
       ],
       "id": "b9b13d87-9aa2-430a-96c1-a6e44a256784",
-      "name": "HTTP Request"
+      "name": "Business Analyst: Raw Technical Task Send"
     }
   ],
   "pinData": {},
@@ -231,18 +232,7 @@
       "main": [
         [
           {
-            "node": "Business Analyst: Raw Technical Task Send",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Business Analyst: Raw Technical Task Send": {
-      "main": [
-        [
-          {
-            "node": "Programmer: Technical Task Send",
+            "node": "Code in JavaScript",
             "type": "main",
             "index": 0
           }
@@ -300,11 +290,6 @@
             "node": "Respond to Slack Verification",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -324,7 +309,29 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "Business Analyst: Raw Technical Task Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analyst: Raw Technical Task Send - To Delete": {
+      "main": [
+        [
+          {
+            "node": "Programmer: Technical Task Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analyst: Raw Technical Task Send": {
+      "main": [
+        [
+          {
+            "node": "Business Analyst: Raw Technical Task Send - To Delete",
             "type": "main",
             "index": 0
           }
@@ -336,7 +343,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "6ca8f883-33a3-4f29-9745-dc8a6750d2fa",
+  "versionId": "6a9ee6a5-7224-4d29-9510-92573d6ac8be",
   "meta": {
     "instanceId": "eb4e11312a6611954811887d5478d8a22c8d0c00be3623bed1a2b98c1e3d5e2b"
   },

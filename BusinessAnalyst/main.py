@@ -110,8 +110,7 @@ def receive_message():
 
 
 @app.route('/receive-task-completion-result', methods=['POST'])
-def receive_task_completion_result():
-    # TODO: hook for receiving results from downstream agents; kept minimal to not break current behavior
+def receive_task_completion_result():    
     if request.is_json:
         data = request.get_json()
         return jsonify({"status": "received", "data": data}), 200
