@@ -23,13 +23,18 @@ def receive_message():
             or ''
         )
 
-        # Accept several common file field names; fallback to first file if present
-        uploaded_file = (
-            request.files.get('attachment')
-            or request.files.get('file')
-            or request.files.get('upload')
-            or (next(iter(request.files.values())) if request.files else None)
-        )
+        # Collect all uploaded files (support multiple files). Accept common field names.
+        uploaded_files = []
+        if request.files:
+            # prefer explicit names first
+            for name in ('attachment', 'file', 'upload'):
+                f = request.files.get(name)
+                if f:
+                    uploaded_files.append(f)
+            # then add any remaining files
+            for f in request.files.values():
+                if f not in uploaded_files:
+                    uploaded_files.append(f)
     except Exception as e:
         app.logger.error(f"Failed to parse multipart request: {e}")
         return jsonify({"error": "invalid_request", "details": str(e)}), 400
@@ -44,33 +49,59 @@ def receive_message():
 
         # Save task creation results to volume
         try:
-            storage_result = save_task_results(original=raw, tasks_result=result, task_id=task_id)
+            # Before saving, if there are uploaded files, annotate the AI result with attachment names
+            annotated_result = result
+            try:
+                filenames = [secure_filename(getattr(f, 'filename', '') or f'file_{i}') for i, f in enumerate(uploaded_files)] if 'uploaded_files' in locals() else []
+                # Try to parse AI result as JSON and attach filenames to each task
+                if isinstance(result, str) and filenames:
+                    parsed = None
+                    try:
+                        parsed = __import__('json').loads(result)
+                    except Exception:
+                        parsed = None
+                    if isinstance(parsed, list):
+                        for t in parsed:
+                            if isinstance(t, dict):
+                                # attach filenames list (or single string if only one)
+                                t['attachment'] = filenames if len(filenames) > 1 else (filenames[0] if filenames else None)
+                        annotated_result = parsed
+                elif isinstance(result, list) and uploaded_files:
+                    for t in result:
+                        if isinstance(t, dict):
+                            t['attachment'] = filenames if len(filenames) > 1 else (filenames[0] if filenames else None)
+                    annotated_result = result
+            except Exception as e:
+                app.logger.warning(f"Failed to annotate AI result with attachments: {e}")
+
+            storage_result = save_task_results(original=raw, tasks_result=annotated_result, task_id=task_id)
             app.logger.info(f"Task storage: {storage_result}")
         except Exception as storage_error:
             app.logger.warning(f"Failed to save task results to volume: {storage_error}")
             storage_result = {"status": "error", "message": str(storage_error)}
 
-        # If an uploaded file is present and storage succeeded, save the file into the same folder
-        file_saved = None
-        if uploaded_file and storage_result.get("status") == "success":
-            try:
-                folder_path = storage_result.get("folder_path")
-                if folder_path:
-                    filename = secure_filename(getattr(uploaded_file, 'filename', '') or 'uploaded_file')
-                    target = Path(folder_path) / filename
-                    uploaded_file.save(str(target))
-                    app.logger.info(f"Saved uploaded file to: {target}")
-                    file_saved = str(target)
-                else:
-                    app.logger.warning("Storage reported success but no folder_path returned; uploaded file not saved")
-            except Exception as save_file_error:
-                app.logger.warning(f"Failed to save uploaded file: {save_file_error}")
+        # If uploaded files are present and storage succeeded, save all files into the same folder
+        files_saved = []
+        if 'uploaded_files' in locals() and uploaded_files and storage_result.get("status") == "success":
+            folder_path = storage_result.get("folder_path")
+            if folder_path:
+                for f in uploaded_files:
+                    try:
+                        filename = secure_filename(getattr(f, 'filename', '') or 'uploaded_file')
+                        target = Path(folder_path) / filename
+                        f.save(str(target))
+                        app.logger.info(f"Saved uploaded file to: {target}")
+                        files_saved.append(str(target))
+                    except Exception as save_file_error:
+                        app.logger.warning(f"Failed to save uploaded file {getattr(f,'filename',None)}: {save_file_error}")
+            else:
+                app.logger.warning("Storage reported success but no folder_path returned; uploaded files not saved")
 
         response_payload = {"taskId": task_id}
         if storage_result:
             response_payload["storage"] = storage_result
-        if file_saved:
-            response_payload["saved_file"] = file_saved
+        if files_saved:
+            response_payload["saved_files"] = files_saved
 
         return jsonify(response_payload), 200
     except Exception as e:
