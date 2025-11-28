@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Constants
-RESULT_ARTIFACTS_FOLDER = "Result artifacts"
+RESULT_ARTIFACTS_FOLDER = "result artifacts"
 
 def get_source_code_files(task_id: str):
     """
@@ -33,9 +33,26 @@ def get_source_code_files(task_id: str):
     try:
         task_folder = find_task_folder(task_id)
         result_artifacts_path = Path(task_folder) / RESULT_ARTIFACTS_FOLDER
-        
-        if not result_artifacts_path.exists():
-            logger.warning(f"Result artifacts folder not found: {result_artifacts_path}")
+        # We prefer files placed inside the `result artifacts` folder, but some workflows
+        # put attachments/source files directly in the parent task folder. Search both
+        # locations and use the first one that contains matching files.
+        search_locations = [result_artifacts_path, Path(task_folder)]
+        found_files = []
+        found_in = None
+        for loc in search_locations:
+            if not loc.exists():
+                continue
+            candidate_files = sorted(
+                loc.glob("Source Code_subtask_*"),
+                key=lambda f: extract_order_from_filename(f.name)
+            )
+            if candidate_files:
+                found_files = candidate_files
+                found_in = loc
+                break
+
+        if not found_files:
+            logger.warning(f"No source code files found in: {result_artifacts_path} or {task_folder}")
             return []
         
         # Find all source code files matching pattern: Source Code_subtask_<number>.<extension>
@@ -48,11 +65,11 @@ def get_source_code_files(task_id: str):
             logger.warning(f"No source code files found in: {result_artifacts_path}")
             return []
         
-        logger.info(f"Found {len(source_files)} source code files: {[f.name for f in source_files]}")
-        
+        logger.info(f"Found {len(found_files)} source code files in {found_in}: {[f.name for f in found_files]}")
+
         # Read all files
         files_with_content = []
-        for file_path in source_files:
+        for file_path in found_files:
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -105,7 +122,7 @@ def execute_all_subtask_code(task_id: str):
         for filename, source_code in source_files:
             logger.info(f"Executing {filename}...")
             try:
-                result = execute_code_safely(source_code)
+                result = execute_code_safely(source_code, result_dir=result_artifacts_path)
                 execution_results.append({
                     "subtask": filename,
                     "compiled": result.get("compiled", False),
