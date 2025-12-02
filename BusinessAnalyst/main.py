@@ -1,5 +1,7 @@
 import logging
 import uuid
+import json
+import re
 from pathlib import Path
 
 from flask import Flask, request, jsonify
@@ -57,16 +59,28 @@ def receive_message():
                 if isinstance(result, str) and filenames:
                     parsed = None
                     try:
-                        parsed = __import__('json').loads(result)
+                        # Remove code fences and surrounding text, then find first JSON object/array
+                        text = result.strip()
+                        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.I)
+                        text = re.sub(r"\s*```$", "", text)
+                        m = re.search(r"(\[.*?\]|\{.*?\})", text, flags=re.S)
+                        if m:
+                            json_text = m.group(0)
+                            parsed = json.loads(json_text)
                     except Exception:
                         parsed = None
+
                     if isinstance(parsed, list):
                         for t in parsed:
                             if isinstance(t, dict):
-                                # attach filenames list (or single string if only one)
                                 t['attachment'] = filenames if len(filenames) > 1 else (filenames[0] if filenames else None)
                         annotated_result = parsed
+                    elif isinstance(parsed, dict):
+                        # single object -> attach and keep as dict (save_subtasks will wrap)
+                        parsed['attachment'] = filenames if len(filenames) > 1 else (filenames[0] if filenames else None)
+                        annotated_result = parsed
                 elif isinstance(result, list) and uploaded_files:
+                    filenames = [secure_filename(getattr(f, 'filename', '') or f'file_{i}') for i, f in enumerate(uploaded_files)]
                     for t in result:
                         if isinstance(t, dict):
                             t['attachment'] = filenames if len(filenames) > 1 else (filenames[0] if filenames else None)

@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Constants
-RESULT_ARTIFACTS_FOLDER = "result artifacts"
+RESULT_ARTIFACTS_FOLDER = "Result artifacts"
 
 def get_source_code_files(task_id: str):
     """
