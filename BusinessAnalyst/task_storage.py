@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -89,7 +90,20 @@ def save_subtasks(folder_path: str, tasks_data: Any) -> None:
     try:
         # Parse tasks_data if it's a string
         if isinstance(tasks_data, str):
-            tasks_list = json.loads(tasks_data)
+            text = tasks_data.strip()
+            # Remove code fences if present (e.g. ```json ... ```)
+            # common patterns: ```json\n...\n``` or ```\n...\n```
+            text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.I)
+            text = re.sub(r"\s*```$", "", text)
+
+            # Try to find the first JSON object or array in the text
+            m = re.search(r"(\[.*?\]|\{.*?\})", text, flags=re.S)
+            if m:
+                json_text = m.group(0)
+                tasks_list = json.loads(json_text)
+            else:
+                # No JSON found — try to parse the whole cleaned text
+                tasks_list = json.loads(text)
         else:
             tasks_list = tasks_data
         

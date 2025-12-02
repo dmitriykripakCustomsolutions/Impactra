@@ -6,6 +6,7 @@ import tempfile
 import subprocess
 from contextlib import redirect_stdout, redirect_stderr
 import re
+import traceback
 from pathlib import Path
 
 
@@ -37,7 +38,7 @@ def _ensure_module_available(module_name: str, pip_install: bool = True, timeout
             return False, f"Failed to install/import {module_name}: {pe}"
 
 
-def execute_code_safely(code_snippet, result_dir: str | Path = None, pip_install: bool = True, install_timeout: int = 120):
+def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments: list[Path] | None = None, pip_install: bool = True, install_timeout: int = 120):
     """
     Execute the code snippet in an isolated temporary working directory.
 
@@ -47,6 +48,23 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, pip_install
     - Returns a dict with keys: compiled, output, error, sourceCode, artifacts
     """
     sanitized = sanitize_code(code_snippet)
+
+    # Normalize attachments parameter to a list of Path objects
+    normalized_attachments = []
+    if attachments:
+        # If a single path string/Path passed, wrap it
+        if isinstance(attachments, (str, Path)):
+            attachments_iter = [attachments]
+        else:
+            attachments_iter = attachments
+
+        for a in attachments_iter:
+            try:
+                normalized_attachments.append(Path(a))
+            except Exception:
+                # write to stderr_buffer later (we don't have it yet); for now, skip invalid
+                continue
+    attachments = normalized_attachments
 
     # detect imports and try to ensure modules are available
     missing_modules = {}
@@ -99,13 +117,32 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, pip_install
 
             # Execute the code
             try:
+                # Copy provided attachments into the temp dir and prepare attachments mapping
+                attachments_mapping = {}
+                if attachments:
+                    for attach in attachments:
+                        try:
+                            p = Path(attach)
+                            if p.exists() and p.is_file():
+                                dest = Path(tmpdir) / p.name
+                                shutil.copy2(p, dest)
+                                attachments_mapping[p.name] = str(dest)
+                            else:
+                                stderr_buffer.write(f"Attachment not found or not a file: {attach}\n")
+                        except Exception as ae:
+                            try:
+                                stderr_buffer.write(f"Attachment copy failed for {attach}: {ae}\n")
+                            except Exception:
+                                pass
+
                 with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-                    # provide a minimal globals namespace but allow full imports
-                    exec_globals = {"__name__": "__main__"}
+                    # provide a minimal globals namespace but expose attachments mapping
+                    exec_globals = {"__name__": "__main__", "attachments": attachments_mapping}
                     exec(sanitized, exec_globals, exec_globals)
             except Exception as e:
-                # capture runtime error
-                error_message = f"Runtime Error: {str(e)}"
+                # capture runtime error with full traceback so caller can see origin
+                tb = traceback.format_exc()
+                error_message = f"Runtime Error: {str(e)}\n{tb}"
 
             execution_output = stdout_buffer.getvalue()
             # combine stderr buffer and runtime error
@@ -138,6 +175,25 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, pip_install
                                     i += 1
                             shutil.copy2(f, dest)
                             artifacts.append(str(dest))
+                    # Also include any attachments that were copied into tmpdir
+                    if attachments:
+                        for attach in attachments:
+                            try:
+                                p = Path(attach)
+                                local = result_path / p.name
+                                if local.exists():
+                                    # already copied by above loop
+                                    if str(local) not in artifacts:
+                                        artifacts.append(str(local))
+                                else:
+                                    # copy original attachment into result path
+                                    src = Path(tmpdir) / p.name
+                                    if src.exists():
+                                        dst = result_path / src.name
+                                        shutil.copy2(src, dst)
+                                        artifacts.append(str(dst))
+                            except Exception as ae:
+                                stderr_buffer.write(f"Attachment final copy failed for {attach}: {ae}\n")
                 except Exception as e:
                     # don't fail on artifact copying
                     error_message = (error_message + "\n" if error_message else "") + f"Artifact copy error: {e}"

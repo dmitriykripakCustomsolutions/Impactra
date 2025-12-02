@@ -122,7 +122,37 @@ def execute_all_subtask_code(task_id: str):
         for filename, source_code in source_files:
             logger.info(f"Executing {filename}...")
             try:
-                result = execute_code_safely(source_code, result_dir=result_artifacts_path)
+                # derive subtask index for matching requirement files
+                try:
+                    subtask_index = extract_order_from_filename(filename)
+                except Exception:
+                    subtask_index = None
+
+                # Look for requirement JSON file in the task folder matching *subtask_<index>.json
+                attachments_to_pass = []
+                if subtask_index is not None:
+                    try:
+                        pattern = f"*subtask_{subtask_index}.json"
+                        req_files = list(Path(task_folder).glob(pattern))
+                        if req_files:
+                            # pick first matching requirement file
+                            req_path = req_files[0]
+                            try:
+                                with open(req_path, 'r', encoding='utf-8') as rf:
+                                    req_json = json.load(rf)
+                                attach_name = req_json.get('attachment')
+                                if attach_name:
+                                    attach_path = Path(task_folder) / attach_name
+                                    if attach_path.exists():
+                                        attachments_to_pass.append(attach_path)
+                                    else:
+                                        logger.warning(f"Attachment listed in {req_path} not found: {attach_path}")
+                            except Exception as e:
+                                logger.warning(f"Failed to read requirement file {req_path}: {e}")
+                    except Exception:
+                        pass
+
+                result = execute_code_safely(source_code, result_dir=result_artifacts_path, attachments=attachments_to_pass)
                 execution_results.append({
                     "subtask": filename,
                     "compiled": result.get("compiled", False),
