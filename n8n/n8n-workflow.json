@@ -3,17 +3,16 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "if ($json[\"type\"] === \"url_verification\") {\n  return [\n    {\n      json: {\n        challenge: $json[\"challenge\"]\n      }\n    }\n  ];\n} else {\n  return [\n    {\n      json: $json\n    }\n  ];\n}\n"
+        "jsCode": "if ($input.first().json.body[\"type\"] === \"url_verification\") {\n  return {\n        challenge: $input.first().json.body.challenge\n      };  \n} else {\n  return {\n      json: $input.first().json\n    };\n}"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1344,
-        -208
+        -1440,
+        -560
       ],
       "id": "784a050b-08de-4829-8f99-0390cf266b08",
-      "name": "Respond to Slack Verification",
-      "disabled": true
+      "name": "Respond to Slack Verification"
     },
     {
       "parameters": {
@@ -230,13 +229,7 @@
   "connections": {
     "Respond to Slack Verification": {
       "main": [
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Programmer: Technical Task Send": {
@@ -343,7 +336,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "6a9ee6a5-7224-4d29-9510-92573d6ac8be",
+  "versionId": "f71aa109-a1e7-4fde-8e19-d7726a4ed24b",
   "meta": {
     "instanceId": "eb4e11312a6611954811887d5478d8a22c8d0c00be3623bed1a2b98c1e3d5e2b"
   },
