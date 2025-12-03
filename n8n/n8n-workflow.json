@@ -8,10 +8,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1440,
-        -560
+        -1280,
+        -256
       ],
-      "id": "784a050b-08de-4829-8f99-0390cf266b08",
+      "id": "8c1e580d-c123-473c-ba6c-bd59d5d0dcc9",
       "name": "Respond to Slack Verification"
     },
     {
@@ -26,10 +26,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -496,
-        -192
+        -336,
+        112
       ],
-      "id": "156aa4c5-1b40-40cc-9131-cd71f2683336",
+      "id": "9d005365-b9d2-44e5-8c94-68b2e1728ef2",
       "continueOnFail": true
     },
     {
@@ -44,10 +44,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -288,
-        -192
+        -128,
+        112
       ],
-      "id": "7bff5c7f-387a-408b-b16e-a060cf655589",
+      "id": "92cfbe99-0b39-4a48-a1c5-127966cd55ce",
       "continueOnFail": true
     },
     {
@@ -62,10 +62,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        160,
-        -192
+        320,
+        112
       ],
-      "id": "7b9e4c03-a3f5-4b68-a671-4bc129a6189c",
+      "id": "b26e4364-835c-422f-8ca8-3699a538b43d",
       "disabled": true,
       "continueOnFail": true
     },
@@ -75,16 +75,16 @@
         "url": "http://host.docker.internal:5000/receive-task-completion-result",
         "jsonParameters": true,
         "options": {},
-        "bodyParametersJson": "={{ { allTestsPassed: $('Tester: Test Source Code').item.json.allTestsPassed} }}"
+        "bodyParametersJson": "={{ { \"taskId\": $('Business Analyst: Raw Technical Task Send').item.json.taskId } }}"
       },
       "name": "Business Analyst: Task Completion Result Send",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        416,
-        -208
+        480,
+        96
       ],
-      "id": "dff4b107-7bfd-4805-8479-2bb31cc7c3c9",
+      "id": "9c13df01-ad9d-45de-a679-0e222d8b1c05",
       "continueOnFail": true
     },
     {
@@ -95,16 +95,17 @@
           "value": "C09PH87TE0P",
           "mode": "id"
         },
-        "text": "={{ $('Programmer: Technical Task Send').item.json.task }}\n\n{{ $('Programmer: Technical Task Send').item.json.completionResult }}",
+        "messageType": "block",
+        "blocksUi": "={\n\t\"attachments\": [\n\t\t{\n\t\t\t\"blocks\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"section\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\t\"text\": \"Source Code\"\n\t\t\t\t\t}\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"divider\"\n\t\t\t\t},\n                {\n\t\t\t\t\t\"type\": \"section\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\t\"text\": \"{{ $('Business Analyst: Task Completion Result Send').item.json.sourceCode }}\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}\n\n\n",
         "otherOptions": {}
       },
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        608,
-        -192
+        992,
+        32
       ],
-      "id": "f10f1d68-b8d6-43a1-9a1e-6198076893d1",
+      "id": "43dbaac0-3a14-4206-8c29-83be5451afea",
       "name": "Send a message",
       "webhookId": "45abbc3d-4518-4137-85c3-d493c9950ca5",
       "credentials": {
@@ -125,10 +126,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1360,
-        0
+        -1200,
+        304
       ],
-      "id": "a1e78f7f-b701-4634-8d5b-d0beba2ed13a",
+      "id": "6e067979-d958-4350-83fd-f192ecd3a1be",
       "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb",
       "alwaysOutputData": true
     },
@@ -144,10 +145,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -48,
-        -192
+        112,
+        112
       ],
-      "id": "4c0d7114-a56b-48f1-a3c7-6e3ab371e3b2",
+      "id": "0c256b62-854f-4648-a945-d3d7ae786391",
       "continueOnFail": true
     },
     {
@@ -157,10 +158,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1184,
-        -224
+        -1024,
+        80
       ],
-      "id": "0677029e-cd80-42ac-b2ce-48cc4d91dacd",
+      "id": "dbb534cb-4cd2-4640-8f1c-f27c06aeefe6",
       "name": "Code in JavaScript"
     },
     {
@@ -187,10 +188,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -752,
-        -192
+        -592,
+        112
       ],
-      "id": "7998f37d-8d53-4d99-9b4c-4d89ad2476aa",
+      "id": "e659babb-729f-4bf4-89eb-4491ce84db34",
       "disabled": true,
       "continueOnFail": true
     },
@@ -218,20 +219,29 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -1008,
-        -208
+        -848,
+        96
       ],
-      "id": "b9b13d87-9aa2-430a-96c1-a6e44a256784",
+      "id": "52f5aa8a-9de4-492d-9601-b2b5d0cd009c",
       "name": "Business Analyst: Raw Technical Task Send"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json; // вся строка ответа\n\nconst body = raw.data; // строка multipart\nconst boundary = body.match(/--(.+?)\\r\\n/)[1];\n\n// Разбиваем части\nconst parts = body.split(`--${boundary}`).filter(p => p.trim());\n\n// Объекты для результата\nlet jsonPart = null;\nlet filePart = null;\nlet fileName = null;\nlet mime = null;\nlet fileData = null;\n\nfor (const part of parts) {\n  if (part.includes('application/json')) {\n    // JSON part\n    const jsonText = part.split('\\r\\n\\r\\n')[1].trim();\n    jsonPart = JSON.parse(jsonText);\n  }\n\n  if (part.includes('filename=')) {\n    // File part\n    const header = part.split('\\r\\n\\r\\n')[0];\n    fileData = part.split('\\r\\n\\r\\n')[1].trim();\n\n    // extract metadata\n    fileName = header.match(/filename=\"(.+?)\"/)[1];\n    mime = header.match(/Content-Type: (.+?)\\r\\n/)[1];\n\n    // convert to base64\n    filePart = Buffer.from(fileData, \"binary\").toString(\"base64\");\n  }\n}\n\nreturn [\n  {\n    json: {\n      parsedJson: jsonPart,\n      fileName,\n      mime,\n    },\n    binary: {\n      completion_result: {\n        data: filePart,\n        fileName,\n        mimeType: mime,\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -224
+      ],
+      "id": "37cb91bc-b887-4d36-bf4b-a73c9e81e239",
+      "name": "Parse Multipart Response",
+      "disabled": true
     }
   ],
   "pinData": {},
   "connections": {
-    "Respond to Slack Verification": {
-      "main": [
-        []
-      ]
-    },
     "Programmer: Technical Task Send": {
       "main": [
         [
@@ -269,7 +279,7 @@
       "main": [
         [
           {
-            "node": "Send a message",
+            "node": "Parse Multipart Response",
             "type": "main",
             "index": 0
           }
@@ -330,13 +340,35 @@
           }
         ]
       ]
+    },
+    "Respond to Slack Verification": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Multipart Response": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "f71aa109-a1e7-4fde-8e19-d7726a4ed24b",
+  "versionId": "1f9b3638-db69-481f-aa65-0f7c8db17b82",
   "meta": {
     "instanceId": "eb4e11312a6611954811887d5478d8a22c8d0c00be3623bed1a2b98c1e3d5e2b"
   },
