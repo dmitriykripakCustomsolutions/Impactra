@@ -8,8 +8,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2032,
-        -448
+        -1808,
+        -376
       ],
       "id": "8043f11f-af5f-42d3-82be-b93fd3e5092f",
       "name": "Respond to Slack Verification"
@@ -36,8 +36,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -1088,
-        -80
+        -1136,
+        -376
       ],
       "id": "f0254567-01aa-46bc-a636-cd3cc3195bc8",
       "continueOnFail": true
@@ -54,8 +54,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -800,
-        -144
+        -912,
+        -448
       ],
       "id": "4f8da7d1-009c-4e16-973f-51f9fee96987",
       "continueOnFail": true
@@ -72,8 +72,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -432,
-        -80
+        -16,
+        -376
       ],
       "id": "54339276-ca83-4d22-b14e-100ff412f9e9",
       "disabled": true,
@@ -91,8 +91,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -272,
-        -96
+        208,
+        -376
       ],
       "id": "9ec36b34-8cd9-47bc-953b-0cf057e727da",
       "continueOnFail": true
@@ -111,8 +111,8 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        112,
-        -144
+        656,
+        -376
       ],
       "id": "d18d4cab-fbd5-4e10-92a1-a0b12b0a6320",
       "name": "Send a message",
@@ -135,8 +135,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1952,
-        128
+        -2032,
+        -376
       ],
       "id": "ad2a0ee4-830a-49da-81bd-6f5aa43a45bb",
       "webhookId": "c077c48b-8437-4275-b5d6-a79b771e84eb",
@@ -154,8 +154,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -576,
-        -80
+        -240,
+        -376
       ],
       "id": "8f11e95f-69c9-47e6-9223-515f1507abff",
       "continueOnFail": true
@@ -167,8 +167,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1776,
-        -112
+        -1584,
+        -376
       ],
       "id": "17024baf-a3cf-4a1d-bafd-5a9c2c8a7c93",
       "name": "Code in JavaScript"
@@ -197,8 +197,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -1600,
-        -96
+        -1360,
+        -376
       ],
       "id": "545af42e-a480-4438-9264-895f7bdd6d55",
       "name": "Business Analyst: Raw Technical Task Send"
@@ -210,8 +210,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -48,
-        -416
+        432,
+        -376
       ],
       "id": "1178815f-a038-4f40-8ffb-81897aef5b7b",
       "name": "Parse Multipart Response",
@@ -228,8 +228,8 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        448,
-        -400
+        1104,
+        -376
       ],
       "id": "322fa0be-87c0-48af-9034-3df4fc8bc5c7",
       "name": "Upload a file",
@@ -243,13 +243,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Function Node\nconst imageBase64 =  $('Business Analyst: Task Completion Result Send').first().json.image.data// base64\nreturn {\n  binary: {\n    file: {\n      data: imageBase64,\n      mimeType: \"image/png\",\n      fileName: \"image.png\"\n    }\n  }\n};"
+        "jsCode": "// Function Node\nconst imageBase64 =  $('Business Analyst: Task Completion Result Send').first().json.image?.data// base64\nreturn {\n  binary: {\n    file: {\n      data: imageBase64,\n      mimeType: \"image/png\",\n      fileName: \"image.png\"\n    }\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        304,
-        -144
+        880,
+        -376
       ],
       "id": "275bfcd2-68a3-4f98-8aa2-02a66251d9b2",
       "name": "Code in JavaScript1"
@@ -261,8 +261,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -784,
-        112
+        -688,
+        -448
       ],
       "id": "98d659b3-604b-4955-abb4-9c635b94f3db",
       "name": "Code Node: Validate Code Runner"
@@ -280,7 +280,7 @@
             {
               "id": "5ae8aa4c-4e93-4da5-ba1a-142b50d548b5",
               "leftValue": "={{ $json.routeTo }}",
-              "rightValue": "\"success\"",
+              "rightValue": "={{ \"success\" }}",
               "operator": {
                 "type": "string",
                 "operation": "equals"
@@ -295,7 +295,7 @@
       "typeVersion": 2.2,
       "position": [
         -464,
-        192
+        -368
       ],
       "id": "e31d7691-60ae-4dd6-9495-8d2a296ea135",
       "name": "If"
@@ -469,7 +469,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "af2b0487-2f77-40bd-a409-925c8b77c2d1",
+  "versionId": "0c5f5f03-fe28-4aad-81d3-ee7cd973ffa5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "eb4e11312a6611954811887d5478d8a22c8d0c00be3623bed1a2b98c1e3d5e2b"
