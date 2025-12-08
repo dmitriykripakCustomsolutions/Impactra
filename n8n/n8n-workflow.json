@@ -95,15 +95,14 @@
           "value": "C09PH87TE0P",
           "mode": "id"
         },
-        "messageType": "block",
-        "blocksUi": "={\n\t\"attachments\": [\n\t\t{\n\t\t\t\"blocks\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"section\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\t\"text\": \"Source Code\"\n\t\t\t\t\t}\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"divider\"\n\t\t\t\t},\n                {\n\t\t\t\t\t\"type\": \"section\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\t\"text\": \"{{ $('Business Analyst: Task Completion Result Send').item.json.sourceCode }}\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}\n\n\n",
+        "text": "=Source Code:\n\n{{ $('Business Analyst: Task Completion Result Send').item.json.sourceCode }}",
         "otherOptions": {}
       },
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        992,
-        32
+        864,
+        48
       ],
       "id": "43dbaac0-3a14-4206-8c29-83be5451afea",
       "name": "Send a message",
@@ -238,6 +237,43 @@
       "id": "37cb91bc-b887-4d36-bf4b-a73c9e81e239",
       "name": "Parse Multipart Response",
       "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "binaryPropertyName": "={{ $json.binary.file }}",
+        "options": {
+          "channelId": "C09PH87TE0P"
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1200,
+        -208
+      ],
+      "id": "4c2ec9d7-a2a7-467c-acf9-2da4345f03d5",
+      "name": "Upload a file",
+      "webhookId": "9179dd21-a0f8-4a25-8258-994c97e0643a",
+      "credentials": {
+        "slackApi": {
+          "id": "3g4OIyDfKfAPDVBK",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function Node\nconst imageBase64 =  $('Business Analyst: Task Completion Result Send').first().json.image.data// base64\nreturn {\n  binary: {\n    file: {\n      data: imageBase64,\n      mimeType: \"image/png\",\n      fileName: \"image.png\"\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        48
+      ],
+      "id": "46b657dd-c913-40b8-be9b-8271a4441908",
+      "name": "Code in JavaScript1"
     }
   ],
   "pinData": {},
@@ -362,14 +398,42 @@
           }
         ]
       ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "1f9b3638-db69-481f-aa65-0f7c8db17b82",
+  "versionId": "755df5ae-8c05-40c7-b6e6-e23896abf4bf",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "eb4e11312a6611954811887d5478d8a22c8d0c00be3623bed1a2b98c1e3d5e2b"
   },
   "id": "N97dH9dZrXnHnF3a",
