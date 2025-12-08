@@ -171,6 +171,53 @@ def get_subtasks_for_processing(task_id: str) -> List[Dict[str, Any]]:
         raise
 
 
+def append_error_to_subtasks(task_id: str, error_message: str) -> List[Dict[str, Any]]:
+    """
+    Append a validation error hint to every subtask description and persist changes.
+    Returns the updated subtask payloads.
+    """
+    if not error_message:
+        logger.info("Empty error message supplied, skipping subtask updates")
+        return read_subtasks(task_id)
+
+    task_folder = find_task_folder(task_id)
+    json_files = [
+        f for f in os.listdir(task_folder)
+        if f.endswith('.json')
+    ]
+
+    if not json_files:
+        logger.warning(f"No JSON subtask files found for taskId {task_id}")
+        return []
+
+    json_files.sort(key=extract_order_number)
+    updated_subtasks: List[Dict[str, Any]] = []
+    error_suffix = f"Consider the possible error: {error_message.strip()}"
+
+    for filename in json_files:
+        file_path = os.path.join(task_folder, filename)
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        description = data.get('taskDescription')
+        if isinstance(description, str):
+            if error_suffix not in description:
+                spacer = "" if description.endswith((" ", "\n")) else " "
+                data['taskDescription'] = f"{description}{spacer}{error_suffix}"
+        else:
+            logger.warning(
+                f"Subtask {filename} missing string taskDescription; skipping append"
+            )
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        updated_subtasks.append(data)
+        logger.info(f"Updated taskDescription with validation error in {filename}")
+
+    return updated_subtasks
+
+
 def detect_file_extension(source_code: str) -> str:
     """
     Detect the programming language from source code content.

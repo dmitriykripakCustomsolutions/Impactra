@@ -1,3 +1,4 @@
+import ast
 import json
 import logging
 import sys
@@ -17,12 +18,45 @@ for path in shared_paths:
         sys.path.insert(0, str(path))
         break
 
-from shared import get_subtasks_for_processing, save_subtask_source_code
+from shared import (
+    append_error_to_subtasks,
+    get_subtasks_for_processing,
+    save_subtask_source_code,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+
+def extract_validation_error(validation_result):
+    """
+    Try to pull the first validation error string from the provided payload.
+    Handles dicts and stringified dicts with single quotes.
+    """
+    if not validation_result:
+        return None
+
+    parsed_result = validation_result
+    try:
+        if isinstance(validation_result, str):
+            try:
+                parsed_result = json.loads(validation_result)
+            except json.JSONDecodeError:
+                parsed_result = ast.literal_eval(validation_result)
+
+        if isinstance(parsed_result, dict):
+            results = parsed_result.get('results')
+            if isinstance(results, list) and results:
+                error_msg = results[0].get('error')
+                if isinstance(error_msg, str) and error_msg.strip():
+                    return error_msg.strip()
+    except Exception as e:
+        logger.warning(f"Unable to extract validation error: {e}")
+
+    return None
+
 
 @app.route('/process-task', methods=['POST'])
 def process_task():    
@@ -36,6 +70,8 @@ def process_task():
         return jsonify({"error": "No data provided"}), 400
     
     task_id = data.get('taskId')
+
+    validation_result = data.get('validationResult')
     if not task_id:
         return jsonify({"error": "Missing 'taskId' field"}), 400
 
@@ -45,6 +81,10 @@ def process_task():
         
         if not subtasks:
             return jsonify({"error": f"No subtasks found for taskId: {task_id}"}), 404
+
+        validation_error = extract_validation_error(validation_result)
+        if validation_error:
+            subtasks = append_error_to_subtasks(task_id, validation_error)
         
         results = []
         
