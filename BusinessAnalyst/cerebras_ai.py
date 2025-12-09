@@ -1,6 +1,6 @@
 import os
 from cerebras.cloud.sdk import Cerebras
-from constants import PROJECT_MANAGER_SYSTEM_CONTENT, COPYWRITER_SYSTEM_CONTENT
+from constants import PROJECT_MANAGER_SYSTEM_CONTENT, PROJECT_MANAGER_SYSTEM_CONTENT_SUBTASKS_SPLITTING, COPYWRITER_SYSTEM_CONTENT
 
 def _call_cerebras_ai_chat(prompt: str, model: str = "llama-3.3-70b", max_tokens: int = 800) -> str:
     client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
@@ -9,7 +9,7 @@ def _call_cerebras_ai_chat(prompt: str, model: str = "llama-3.3-70b", max_tokens
     model=model,
     messages=[
         {
-                "role": "system", "content": PROJECT_MANAGER_SYSTEM_CONTENT                
+                "role": "system", "content": PROJECT_MANAGER_SYSTEM_CONTENT_SUBTASKS_SPLITTING                
             },
             {
                 "role": "user", "content": prompt
