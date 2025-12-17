@@ -9,6 +9,8 @@ import re
 import traceback
 from pathlib import Path
 import logging
+import json
+from repo_worker import _save_source_to_repo 
 
 # Add shared module to path for both local and Docker environments
 shared_paths = [
@@ -28,7 +30,6 @@ logger = logging.getLogger("__main__")
 
 # Constants
 RESULT_ARTIFACTS_FOLDER = "Result artifacts"
-
 
 def _detect_imports(code: str):
     """Return a set of top-level module names detected in import statements."""
@@ -430,6 +431,21 @@ def execute_all_subtask_code(task_id: str):
                     with open(output_file, 'w', encoding='utf-8') as out_f:
                         json.dump(result_item, out_f, ensure_ascii=False, indent=2)
                     logger.info(f"Saved run result to {output_file}")
+                except Exception as e:
+                    logger.error(f"Failed to write run result for {filename}: {e}")
+
+                # If execution produced no error, save successful source to repository
+                try:
+                    last_result = execution_results[-1]
+                    err = last_result.get("error", "")
+                    if not err:
+                        # Determine a reasonable filename to save (use original filename)
+                        save_filename = filename
+                        # Save the source into the repository (best-effort)
+                        try:
+                            _save_source_to_repo(task_id, save_filename, last_result.get("sourceCode", ""))
+                        except Exception as se:
+                            logger.warning(f"Failed to save successful source to repo: {se}")
                 except Exception as e:
                     logger.error(f"Failed to write run result for {filename}: {e}")
                 logger.info(f"✓ Completed execution of {filename}")
