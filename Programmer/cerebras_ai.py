@@ -1,7 +1,7 @@
 import os
 import logging
 from cerebras.cloud.sdk import Cerebras
-from constants import SYSTEM_CONTENT
+from constants import SYSTEM_CONTENT, SYSTEM_CONTENT_FUNCTION_PER_CODE_CHUNK
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ def _call_cerebras_ai_chat(prompt: str, model: str = "llama-3.3-70b", max_tokens
         model=model,
         messages=[
             {
-                "role": "system", "content": SYSTEM_CONTENT                
+                "role": "system", "content": SYSTEM_CONTENT_FUNCTION_PER_CODE_CHUNK                
             },
             {
                 "role": "user", "content": prompt

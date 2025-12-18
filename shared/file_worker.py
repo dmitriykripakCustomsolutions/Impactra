@@ -266,28 +266,184 @@ def detect_file_extension(source_code: str) -> str:
 
 def save_subtask_source_code(source_code: str, task_id: str, subtask_index: int) -> str:
     try:
-        # Find the task folder
         task_folder = find_task_folder(task_id)
-        
-        # Create Result artifacts subfolder if it doesn't exist
         result_artifacts_path = os.path.join(task_folder, RESULT_ARTIFACTS_FOLDER)
         os.makedirs(result_artifacts_path, exist_ok=True)
         logger.info(f"Result artifacts folder ready: {result_artifacts_path}")
-        
-        # Detect file extension from source code
-        file_extension = detect_file_extension(source_code)
-        
-        # Create filename: Source Code_subtask_<index>.<extension>
+
+        def _strip_code_fence(s: str) -> str:
+            if not s:
+                return s
+            s = s.strip()
+            if s.startswith("```"):
+                parts = s.split("\n")
+                parts = parts[1:]
+                if parts and parts[-1].strip().endswith("```"):
+                    parts = parts[:-1]
+                return "\n".join(parts)
+            return s
+
+        def _sanitize_name(name: str) -> str:
+            if not name:
+                return "unknown"
+            sanitized = re.sub(r'[^0-9A-Za-z_]+', '_', name.strip())
+            return sanitized or 'unknown'
+
+        cleaned = _strip_code_fence(source_code)
+
+        parsed = None
+
+        # Robust JSON parsing:
+        # - Handle normal JSON arrays/objects
+        # - Handle JSON that is double-encoded (a JSON string containing JSON)
+        # - Handle escaped newlines and other escape sequences (e.g. "\n") by unescaping
+        try:
+            parsed = json.loads(cleaned)
+
+            # If the value is a JSON-encoded string, try to parse the inner value.
+            if isinstance(parsed, str):
+                try:
+                    nested = json.loads(parsed)
+                    parsed = nested
+                    # If nested was parsed successfully, update the cleaned text
+                    if isinstance(nested, (dict, list)):
+                        cleaned = json.dumps(nested)
+                    else:
+                        cleaned = str(nested)
+                except Exception:
+                    # Try unescaping common escape sequences and parse again
+                    try:
+                        unescaped = parsed.encode('utf-8').decode('unicode_escape')
+                        parsed = json.loads(unescaped)
+                        cleaned = unescaped
+                    except Exception:
+                        # leave parsed as string if we can't parse deeper
+                        pass
+
+        except Exception as ex:
+            # First attempt failed — try to recover.
+            # Common issue: JSON contains unescaped literal newlines or other control
+            # characters inside quoted strings (Invalid control character). Sanitize
+            # such control chars inside strings by escaping them (\n, \r, \t)
+            def _sanitize_control_chars_in_json(text: str) -> str:
+                out_chars = []
+                in_string = False
+                esc = False
+
+                for ch in text:
+                    if ch == '"' and not esc:
+                        out_chars.append(ch)
+                        in_string = not in_string
+                        esc = False
+                        continue
+
+                    if ch == '\\' and not esc:
+                        out_chars.append(ch)
+                        esc = True
+                        continue
+
+                    if esc:
+                        out_chars.append(ch)
+                        esc = False
+                        continue
+
+                    if in_string:
+                        if ch == '\n':
+                            out_chars.append('\\n')
+                            continue
+                        if ch == '\r':
+                            out_chars.append('\\r')
+                            continue
+                        if ch == '\t':
+                            out_chars.append('\\t')
+                            continue
+                        if ord(ch) < 0x20:
+                            out_chars.append('\\u%04x' % ord(ch))
+                            continue
+
+                    out_chars.append(ch)
+
+                return ''.join(out_chars)
+
+            parsed = None
+            try:
+                sanitized = _sanitize_control_chars_in_json(cleaned)
+                parsed = json.loads(sanitized)
+                cleaned = sanitized
+            except Exception:
+                # Fallback strategies: try unicode_escape unescape, strip surrounding quotes
+                try:
+                    unescaped = cleaned.encode('utf-8').decode('unicode_escape')
+                    parsed = json.loads(unescaped)
+                    cleaned = unescaped
+                except Exception:
+                    stripped = None
+                    if (cleaned.startswith('"') and cleaned.endswith('"')) or (cleaned.startswith("'") and cleaned.endswith("'")):
+                        stripped = cleaned[1:-1]
+
+                    if stripped is not None:
+                        try:
+                            parsed = json.loads(stripped)
+                            cleaned = stripped
+                        except Exception:
+                            try:
+                                unescaped2 = stripped.encode('utf-8').decode('unicode_escape')
+                                parsed = json.loads(unescaped2)
+                                cleaned = unescaped2
+                            except Exception:
+                                parsed = None
+                    else:
+                        parsed = None
+
+            if parsed is None:
+                logger.warning(f"Failed to parse subtask source as JSON: {ex}")
+
+        saved_paths = []
+
+        if isinstance(parsed, list):
+            for item in parsed:
+                if not isinstance(item, dict):
+                    logger.warning("Skipping non-dict item in parsed subtask source list")
+                    continue
+
+                func_name = item.get('function') or item.get('name') or 'unknown'
+                func_name = _sanitize_name(func_name)
+
+                code_val = item.get('code') or item.get('source') or ''
+
+                completion_order = item.get('completionOrder') or item.get('completion_order')
+                try:
+                    completion_order = int(completion_order) if completion_order is not None else 0
+                except Exception:
+                    completion_order = 0
+
+                ext = detect_file_extension(code_val)
+                base_filename = f"Source {func_name}_subtask_{subtask_index}_{completion_order}.{ext}"
+                file_path = os.path.join(result_artifacts_path, base_filename)
+
+                i = 1
+                while os.path.exists(file_path):
+                    file_path = os.path.join(result_artifacts_path, f"Source {func_name}_subtask_{subtask_index}_{completion_order}_{i}.{ext}")
+                    i += 1
+
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(code_val)
+
+                saved_paths.append(file_path)
+                logger.info(f"Saved subtask source for function '{func_name}' to: {file_path}")
+
+            return saved_paths
+
+        # Fallback: save whole body as a single file
+        file_extension = detect_file_extension(cleaned)
         filename = f"Source Code_subtask_{subtask_index}.{file_extension}"
         file_path = os.path.join(result_artifacts_path, filename)
-        
-        # Write the source code to file
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(source_code)
-        
+
         logger.info(f"Successfully saved subtask source code to: {file_path}")
         return file_path
-        
+
     except FileNotFoundError as e:
         logger.error(f"Task folder not found for taskId {task_id}: {e}")
         raise
