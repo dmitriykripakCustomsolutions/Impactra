@@ -21,6 +21,8 @@ SYSTEM_CONTENT_FUNCTION_PER_CODE_CHUNK = "You are a programmering assistant. Pro
                     "And the code field should contain the full source code that combines all the functions provided earlier"\
                     "This full source code will be used for compilation and testing"\
                     "Make sure the final full source code is complete and ready to run."\
-                    "\"completionOrder\" for this item should be 0"
+                    "\"completionOrder\" for this item should be 0. All the imports should be included in the full source code"\
+                    "When providing code snippets, the only required imports should be included in the code snippets."\
+                    "The imports itself should not be moved into separated function"\
 
 WHOLE_SOURCE_CODE_FILE_SUFFIX = "whole_source_code"

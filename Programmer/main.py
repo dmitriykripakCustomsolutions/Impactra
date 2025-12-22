@@ -22,6 +22,7 @@ from shared import (
     append_error_to_subtasks,
     get_subtasks_for_processing,
     save_subtask_source_code,
+    clear_result_artifacts
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -84,6 +85,8 @@ def process_task():
 
         validation_error = extract_validation_error(validation_result)
         if validation_error:
+            # Clear previous result artifacts for this task to avoid stale files
+            clear_result_artifacts(task_id)
             subtasks = append_error_to_subtasks(task_id, validation_error)
         
         results = []

@@ -264,139 +264,215 @@ def detect_file_extension(source_code: str) -> str:
     return 'txt'
 
 
-def save_subtask_source_code(source_code: str, task_id: str, subtask_index: int) -> str:
+def strip_code_fence(s: str) -> str:
+    if not s:
+        return s
+    s = s.strip()
+    if s.startswith("```"):
+        parts = s.split("\n")[1:]
+        if parts and parts[-1].strip().endswith("```"):
+            parts = parts[:-1]
+        return "\n".join(parts)
+    return s
+
+
+def sanitize_name(name: str) -> str:
+    if not name:
+        return "unknown"
+    sanitized = re.sub(r'[^0-9A-Za-z_]+', '_', name.strip())
+    return sanitized or 'unknown'
+
+
+def sanitize_control_chars_in_json(text: str) -> str:
+    out_chars = []
+    in_string = False
+    esc = False
+
+    for ch in text:
+        if ch == '"' and not esc:
+            out_chars.append(ch)
+            in_string = not in_string
+            esc = False
+            continue
+
+        if ch == '\\' and not esc:
+            out_chars.append(ch)
+            esc = True
+            continue
+
+        if esc:
+            out_chars.append(ch)
+            esc = False
+            continue
+
+        if in_string:
+            if ch == '\n':
+                out_chars.append('\\n')
+                continue
+            if ch == '\r':
+                out_chars.append('\\r')
+                continue
+            if ch == '\t':
+                out_chars.append('\\t')
+                continue
+            if ord(ch) < 0x20:
+                out_chars.append('\\u%04x' % ord(ch))
+                continue
+
+        out_chars.append(ch)
+
+    return ''.join(out_chars)
+
+
+def strip_triple_quotes(s: str) -> str:
+    if not s:
+        return s
+    t = s.strip()
+    # Remove triple-quote wrappers if present ("""...""" or '''...''')
+    if (t.startswith('"""') and t.endswith('"""')) or (t.startswith("'''") and t.endswith("'''")):
+        inner = t[3:-3]
+        # remove leading newline if present
+        if inner.startswith('\n'):
+            inner = inner[1:]
+        return inner
+    return s
+
+
+def _convert_triple_quotes_to_json_strings(text: str) -> str:
+    # Replace triple-quoted blocks ("""...""" or '''...''') with JSON-compatible
+    # double quoted strings with escaped content.
+    def _repl(m):
+        inner = m.group(2)
+        if inner.startswith('\n'):
+            inner = inner[1:]
+        escaped = inner.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+        return '"' + escaped + '"'
+
+    return re.sub(r'("""|\'\'\')([\s\S]*?)\1', _repl, text)
+
+
+def _strip_outer_quotes(s: str) -> str:
+    s = s.strip()
+    if s and s[0] == s[-1] and s[0] in ('"', "'"):
+        return s[1:-1]
+    return s
+
+
+def try_parse_json_cleaned(cleaned: str):
+    """Attempt multiple, ordered strategies to parse JSON-like input produced by LLMs.
+
+    Strategies (in order tried):
+    1. Direct json.loads(cleaned)
+    2. If parsed is a JSON string, attempt to parse inner JSON or unicode-unescape then parse.
+    3. Sanitizing control chars inside string literals and retry loading.
+    4. Strip outer quotes, unicode-unescape, convert triple-quoted blocks to JSON strings,
+       sanitize control chars, and parse.
+    5. Convert triple-quoted blocks in-place and try parsing.
+    6. Final fallback: unicode-unescape original and try parsing.
+    Returns (parsed, cleaned_used) where cleaned_used is the last transformed string that was parsed.
+    """
+    # 1) Direct
+    try:
+        parsed = json.loads(cleaned)
+        # 2) If the top-level value is a JSON string containing JSON, try parse inner
+        if isinstance(parsed, str):
+            # try direct nested
+            try:
+                nested = json.loads(parsed)
+                if isinstance(nested, (dict, list)):
+                    return nested, json.dumps(nested)
+            except Exception:
+                # try unicode unescape then parse
+                try:
+                    unescaped = parsed.encode('utf-8').decode('unicode_escape')
+                    nested = json.loads(unescaped)
+                    return nested, unescaped
+                except Exception:
+                    return parsed, cleaned
+        return parsed, cleaned
+    except Exception:
+        pass
+
+    # 3) Sanitize control chars and try
+    try:
+        sanitized = sanitize_control_chars_in_json(cleaned)
+        parsed = json.loads(sanitized)
+        return parsed, sanitized
+    except Exception:
+        pass
+
+    # 4) Strip outer quotes, unescape, convert triple quotes, sanitize and try
+    try:
+        s = _strip_outer_quotes(cleaned)
+        try:
+            s_un = s.encode('utf-8').decode('unicode_escape')
+        except Exception:
+            s_un = s
+
+        s_conv = _convert_triple_quotes_to_json_strings(s_un)
+        s_conv = sanitize_control_chars_in_json(s_conv)
+
+        parsed = json.loads(s_conv)
+        return parsed, s_conv
+    except Exception:
+        pass
+
+    # 5) If there are triple-quoted blocks but no outer wrapping, convert in-place and try
+    try:
+        s_conv = _convert_triple_quotes_to_json_strings(cleaned)
+        s_conv = sanitize_control_chars_in_json(s_conv)
+        parsed = json.loads(s_conv)
+        return parsed, s_conv
+    except Exception:
+        pass
+
+    # 6) Final fallback: unicode-unescape original and try
+    try:
+        unescaped = cleaned.encode('utf-8').decode('unicode_escape')
+        parsed = json.loads(unescaped)
+        return parsed, unescaped
+    except Exception:
+        return None, cleaned
+
+
+def clear_result_artifacts(task_id: str):
+    """Remove all files and folders under the task's Result artifacts folder.
+
+    This will leave an empty `Result artifacts` folder in place.
+    """
+    task_folder = find_task_folder(task_id)
+    artifacts_path = os.path.join(task_folder, RESULT_ARTIFACTS_FOLDER)
+
+    if not os.path.exists(artifacts_path):
+        logger.info(f"No Result artifacts to clear for taskId {task_id}: {artifacts_path} does not exist")
+        return
+
+    # Remove the directory contents safely
+    try:
+        for entry in os.listdir(artifacts_path):
+            full_path = os.path.join(artifacts_path, entry)
+            if os.path.isdir(full_path):
+                # remove directories recursively
+                import shutil
+
+                shutil.rmtree(full_path)
+            else:
+                os.remove(full_path)
+        logger.info(f"Cleared Result artifacts for taskId {task_id}: {artifacts_path}")
+    except Exception as e:
+        logger.error(f"Failed to clear Result artifacts for taskId {task_id}: {e}")
+        raise
+
+
+def save_subtask_source_code(source_code: str, task_id: str, subtask_index: int):
     try:
         task_folder = find_task_folder(task_id)
         result_artifacts_path = os.path.join(task_folder, RESULT_ARTIFACTS_FOLDER)
         os.makedirs(result_artifacts_path, exist_ok=True)
         logger.info(f"Result artifacts folder ready: {result_artifacts_path}")
 
-        def _strip_code_fence(s: str) -> str:
-            if not s:
-                return s
-            s = s.strip()
-            if s.startswith("```"):
-                parts = s.split("\n")
-                parts = parts[1:]
-                if parts and parts[-1].strip().endswith("```"):
-                    parts = parts[:-1]
-                return "\n".join(parts)
-            return s
-
-        def _sanitize_name(name: str) -> str:
-            if not name:
-                return "unknown"
-            sanitized = re.sub(r'[^0-9A-Za-z_]+', '_', name.strip())
-            return sanitized or 'unknown'
-
-        cleaned = _strip_code_fence(source_code)
-
-        parsed = None
-
-        # Robust JSON parsing:
-        # - Handle normal JSON arrays/objects
-        # - Handle JSON that is double-encoded (a JSON string containing JSON)
-        # - Handle escaped newlines and other escape sequences (e.g. "\n") by unescaping
-        try:
-            parsed = json.loads(cleaned)
-
-            # If the value is a JSON-encoded string, try to parse the inner value.
-            if isinstance(parsed, str):
-                try:
-                    nested = json.loads(parsed)
-                    parsed = nested
-                    # If nested was parsed successfully, update the cleaned text
-                    if isinstance(nested, (dict, list)):
-                        cleaned = json.dumps(nested)
-                    else:
-                        cleaned = str(nested)
-                except Exception:
-                    # Try unescaping common escape sequences and parse again
-                    try:
-                        unescaped = parsed.encode('utf-8').decode('unicode_escape')
-                        parsed = json.loads(unescaped)
-                        cleaned = unescaped
-                    except Exception:
-                        # leave parsed as string if we can't parse deeper
-                        pass
-
-        except Exception as ex:
-            # First attempt failed — try to recover.
-            # Common issue: JSON contains unescaped literal newlines or other control
-            # characters inside quoted strings (Invalid control character). Sanitize
-            # such control chars inside strings by escaping them (\n, \r, \t)
-            def _sanitize_control_chars_in_json(text: str) -> str:
-                out_chars = []
-                in_string = False
-                esc = False
-
-                for ch in text:
-                    if ch == '"' and not esc:
-                        out_chars.append(ch)
-                        in_string = not in_string
-                        esc = False
-                        continue
-
-                    if ch == '\\' and not esc:
-                        out_chars.append(ch)
-                        esc = True
-                        continue
-
-                    if esc:
-                        out_chars.append(ch)
-                        esc = False
-                        continue
-
-                    if in_string:
-                        if ch == '\n':
-                            out_chars.append('\\n')
-                            continue
-                        if ch == '\r':
-                            out_chars.append('\\r')
-                            continue
-                        if ch == '\t':
-                            out_chars.append('\\t')
-                            continue
-                        if ord(ch) < 0x20:
-                            out_chars.append('\\u%04x' % ord(ch))
-                            continue
-
-                    out_chars.append(ch)
-
-                return ''.join(out_chars)
-
-            parsed = None
-            try:
-                sanitized = _sanitize_control_chars_in_json(cleaned)
-                parsed = json.loads(sanitized)
-                cleaned = sanitized
-            except Exception:
-                # Fallback strategies: try unicode_escape unescape, strip surrounding quotes
-                try:
-                    unescaped = cleaned.encode('utf-8').decode('unicode_escape')
-                    parsed = json.loads(unescaped)
-                    cleaned = unescaped
-                except Exception:
-                    stripped = None
-                    if (cleaned.startswith('"') and cleaned.endswith('"')) or (cleaned.startswith("'") and cleaned.endswith("'")):
-                        stripped = cleaned[1:-1]
-
-                    if stripped is not None:
-                        try:
-                            parsed = json.loads(stripped)
-                            cleaned = stripped
-                        except Exception:
-                            try:
-                                unescaped2 = stripped.encode('utf-8').decode('unicode_escape')
-                                parsed = json.loads(unescaped2)
-                                cleaned = unescaped2
-                            except Exception:
-                                parsed = None
-                    else:
-                        parsed = None
-
-            if parsed is None:
-                logger.warning(f"Failed to parse subtask source as JSON: {ex}")
+        cleaned = strip_code_fence(source_code)
+        parsed, cleaned = try_parse_json_cleaned(cleaned)
 
         saved_paths = []
 
@@ -407,9 +483,11 @@ def save_subtask_source_code(source_code: str, task_id: str, subtask_index: int)
                     continue
 
                 func_name = item.get('function') or item.get('name') or 'unknown'
-                func_name = _sanitize_name(func_name)
+                func_name = sanitize_name(func_name)
 
                 code_val = item.get('code') or item.get('source') or ''
+                # strip triple-quote wrappers commonly used in returned code blocks
+                code_val = strip_triple_quotes(code_val)
 
                 completion_order = item.get('completionOrder') or item.get('completion_order')
                 try:
@@ -418,7 +496,15 @@ def save_subtask_source_code(source_code: str, task_id: str, subtask_index: int)
                     completion_order = 0
 
                 ext = detect_file_extension(code_val)
-                base_filename = f"Source {func_name}_subtask_{subtask_index}_{completion_order}.{ext}"
+
+                # special-case: items named 'whole_source_code' should be saved with the
+                # filename 'Whole source code_subtask_<subtask_index>.<ext>'
+                func_normalized = (item.get('function') or item.get('name') or '').strip().lower().replace(' ', '_')
+                if func_normalized == 'whole_source_code':
+                    base_filename = f"Whole source code_subtask_{subtask_index}_0.{ext}"
+                else:
+                    base_filename = f"Source {func_name}_subtask_{subtask_index}_{completion_order}.{ext}"
+
                 file_path = os.path.join(result_artifacts_path, base_filename)
 
                 i = 1
@@ -434,7 +520,6 @@ def save_subtask_source_code(source_code: str, task_id: str, subtask_index: int)
 
             return saved_paths
 
-        # Fallback: save whole body as a single file
         file_extension = detect_file_extension(cleaned)
         filename = f"Source Code_subtask_{subtask_index}.{file_extension}"
         file_path = os.path.join(result_artifacts_path, filename)
