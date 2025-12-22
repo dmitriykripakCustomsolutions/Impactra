@@ -292,7 +292,7 @@ def get_source_code_files(task_id: str):
             if not loc.exists():
                 continue
             candidate_files = sorted(
-                loc.glob("Source Code_subtask_*"),
+                loc.glob("Whole source code_subtask_*"),
                 key=lambda f: extract_order_from_filename(f.name)
             )
             if candidate_files:
@@ -304,9 +304,9 @@ def get_source_code_files(task_id: str):
             logger.warning(f"No source code files found in: {result_artifacts_path} or {task_folder}")
             return []
         
-        # Find all source code files matching pattern: Source Code_subtask_<number>.<extension>
+        # Find all source code files matching pattern: Whole source code_subtask_<number>.<extension>
         source_files = sorted(
-            result_artifacts_path.glob("Source Code_subtask_*"),
+            result_artifacts_path.glob("Whole source code_subtask_*"),
             key=lambda f: extract_order_from_filename(f.name)
         )
         
@@ -338,13 +338,17 @@ def get_source_code_files(task_id: str):
         raise
 
 def extract_order_from_filename(filename: str) -> int:
-    """
-    Extract the order number from filename like: Source Code_subtask_0.py
-    """
-    import re
-    match = re.search(r'_(\d+)\.', filename)
+    if not filename:
+        return float('inf')
+
+    fname = str(filename)
+    # Look specifically for 'subtask_<digits>' and capture the digits right after the suffix
+    match = re.search(r'subtask_(\d+)', fname)
     if match:
-        return int(match.group(1))
+        try:
+            return int(match.group(1))
+        except ValueError:
+            pass
     return float('inf')
 
 def execute_all_subtask_code(task_id: str):
