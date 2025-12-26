@@ -50,9 +50,12 @@ def extract_validation_error(validation_result):
         if isinstance(parsed_result, dict):
             results = parsed_result.get('results')
             if isinstance(results, list) and results:
-                error_msg = results[0].get('error')
-                if isinstance(error_msg, str) and error_msg.strip():
-                    return error_msg.strip()
+                errors = []
+                for result in results:
+                    error_msg = result.get('error')
+                    if isinstance(error_msg, str) and error_msg.strip():
+                        errors.append({'error': error_msg.strip() + '; ', 'subtask': result.get('subtask')})
+                return errors
     except Exception as e:
         logger.warning(f"Unable to extract validation error: {e}")
 
@@ -77,17 +80,17 @@ def process_task():
         return jsonify({"error": "Missing 'taskId' field"}), 400
 
     try:
+        validation_error = extract_validation_error(validation_result)
+        if validation_error:
+            # Clear previous result artifacts for this task to avoid stale files
+            clear_result_artifacts(task_id)
+            append_error_to_subtasks(task_id, validation_error)
+        
         # Load all subtasks from the task folder
         subtasks = get_subtasks_for_processing(task_id)
         
         if not subtasks:
             return jsonify({"error": f"No subtasks found for taskId: {task_id}"}), 404
-
-        validation_error = extract_validation_error(validation_result)
-        if validation_error:
-            # Clear previous result artifacts for this task to avoid stale files
-            clear_result_artifacts(task_id)
-            subtasks = append_error_to_subtasks(task_id, validation_error)
         
         results = []
         

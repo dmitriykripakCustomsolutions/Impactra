@@ -167,13 +167,13 @@ def receive_task_completion_result():
         if not f.is_file():
             continue
         name = f.name
-        # Source code files named like: 'Source Code_subtask_<index>'
-        if name.startswith('Source Code_subtask_'):
+        # Source code files named like: 'Whole source code_subtask_<index>'
+        if name.startswith('Whole source code_subtask_'):
             try:
                 content = f.read_text(encoding='utf-8', errors='replace')
                 source_code_parts.append(content)
             except Exception as e:
-                app.logger.warning(f"Failed to read Source Code file {name}: {e}")
+                app.logger.warning(f"Failed to read Whole source code file {name}: {e}")
                 source_code_parts.append("")
             continue
         # Test result files named like: 'Test result_subtask_<subtask_index>_test_<test_index>'

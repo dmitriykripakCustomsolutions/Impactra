@@ -10,7 +10,16 @@ import traceback
 from pathlib import Path
 import logging
 import json
-from repo_worker import _save_source_to_repo 
+try:
+    from repo_worker import _save_source_to_repo
+except Exception:
+    try:
+        from .repo_worker import _save_source_to_repo
+    except Exception:
+        # Fallback stub for environments where pushing to repo is disabled or import fails
+        def _save_source_to_repo(task_id, filename, source_code):
+            return None
+
 
 # Add shared module to path for both local and Docker environments
 shared_paths = [
@@ -59,14 +68,18 @@ def _ensure_module_available(module_name: str, pip_install: bool = True, timeout
             return False, f"Failed to install/import {module_name}: {pe}"
 
 
-def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments: list[Path] | None = None, pip_install: bool = True, install_timeout: int = 120):
+def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments: list[Path] | None = None, pip_install: bool = True, install_timeout: int = 120, exec_timeout: int = 30):
     """
-    Execute the code snippet in an isolated temporary working directory.
+    Execute the code snippet in an isolated temporary working directory using a
+    subprocess runner to ensure any resources opened by the executed code are
+    released when the subprocess exits.
 
     - `result_dir` (optional): if provided, any generated artifact files (images, charts)
       found in the temp directory will be copied into this directory.
     - `pip_install`: if True, attempts to pip install detected imports that are missing.
-    - Returns a dict with keys: compiled, output, error, sourceCode, artifacts
+    - `exec_timeout`: maximum seconds to allow execution before killing the runner.
+
+    Returns a dict with keys: compiled, output, error, sourceCode, artifacts
     """
     sanitized = sanitize_code(code_snippet)
 
@@ -83,7 +96,6 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments
             try:
                 normalized_attachments.append(Path(a))
             except Exception:
-                # write to stderr_buffer later (we don't have it yet); for now, skip invalid
                 continue
     attachments = normalized_attachments
 
@@ -99,15 +111,12 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments
         # detection shouldn't stop execution
         missing_modules['detection_error'] = str(e)
 
-    stdout_buffer = io.StringIO()
-    stderr_buffer = io.StringIO()
-
     compilation_status = True
     execution_output = ""
     error_message = ""
     artifacts = []
 
-    # Prepare temp working directory to capture produced files
+    # Prepare temp working directory to capture produced files and run in a subprocess
     with tempfile.TemporaryDirectory() as tmpdir:
         orig_cwd = os.getcwd()
         try:
@@ -116,7 +125,7 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments
             # Set non-interactive matplotlib backend to avoid GUI requirements
             os.environ.setdefault('MPLBACKEND', 'Agg')
 
-            # First try to compile
+            # First try to compile locally to surface SyntaxError quickly
             try:
                 compile(sanitized, '<string>', 'exec')
             except SyntaxError as se:
@@ -130,49 +139,86 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments
                     "artifacts": []
                 }
 
-            # If import installation failed for some modules, report and continue (execution may still fail)
-            if missing_modules:
-                stderr_buffer.write("Missing modules or install errors:\n")
-                for k, v in missing_modules.items():
-                    stderr_buffer.write(f"{k}: {v}\n")
+            # Prepare attachments mapping and write attachments file for runner
+            attachments_mapping = {}
+            if attachments:
+                for attach in attachments:
+                    try:
+                        p = Path(attach)
+                        if p.exists() and p.is_file():
+                            dest = Path(tmpdir) / p.name
+                            shutil.copy2(p, dest)
+                            attachments_mapping[p.name] = str(dest)
+                    except Exception as ae:
+                        # best-effort; log and continue
+                        logger.warning(f"Attachment copy failed for {attach}: {ae}")
 
-            # Execute the code
+            # Write the user's code to a file that the runner will execute
+            user_code_path = Path(tmpdir) / "user_code.py"
+            with open(user_code_path, 'w', encoding='utf-8') as uc:
+                uc.write(sanitized)
+
+            # Write attachments mapping to a JSON file available to the runner
+            attachments_file = Path(tmpdir) / "attachments.json"
             try:
-                # Copy provided attachments into the temp dir and prepare attachments mapping
+                with open(attachments_file, 'w', encoding='utf-8') as af:
+                    json.dump(attachments_mapping, af)
+            except Exception:
+                # If attachments cannot be written, proceed without them
                 attachments_mapping = {}
-                if attachments:
-                    for attach in attachments:
-                        try:
-                            p = Path(attach)
-                            if p.exists() and p.is_file():
-                                dest = Path(tmpdir) / p.name
-                                shutil.copy2(p, dest)
-                                attachments_mapping[p.name] = str(dest)
-                            else:
-                                stderr_buffer.write(f"Attachment not found or not a file: {attach}\n")
-                        except Exception as ae:
-                            try:
-                                stderr_buffer.write(f"Attachment copy failed for {attach}: {ae}\n")
-                            except Exception:
-                                pass
 
-                with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-                    # provide a minimal globals namespace but expose attachments mapping
-                    exec_globals = {"__name__": "__main__", "attachments": attachments_mapping}
-                    exec(sanitized, exec_globals, exec_globals)
-            except Exception as e:
-                # capture runtime error with full traceback so caller can see origin
-                tb = traceback.format_exc()
-                error_message = f"Runtime Error: {str(e)}\n{tb}"
+            # Create a small runner script that loads attachments and execs the user code
+            runner_path = Path(tmpdir) / "__runner__.py"
+            runner_code = """
+import json
+from pathlib import Path
+import sys
 
-            execution_output = stdout_buffer.getvalue()
-            # combine stderr buffer and runtime error
-            stderr_contents = stderr_buffer.getvalue()
-            if stderr_contents:
-                if error_message:
-                    error_message = stderr_contents + "\n" + error_message
+# Load attachments mapping (best-effort)
+try:
+    with open('attachments.json', 'r', encoding='utf-8') as f:
+        attachments = json.load(f)
+except Exception:
+    attachments = {}
+
+# Execute the user code from file in a clean globals dict exposing `attachments`
+_globals = {"__name__": "__main__", "attachments": attachments}
+with open('user_code.py', 'r', encoding='utf-8') as uf:
+    code = uf.read()
+exec(compile(code, 'user_code.py', 'exec'), _globals, _globals)
+"""
+            with open(runner_path, 'w', encoding='utf-8') as rf:
+                rf.write(runner_code)
+
+            # Run the runner in a subprocess to ensure all resources are released on exit
+            try:
+                proc = subprocess.run(
+                    [sys.executable, str(runner_path)],
+                    cwd=tmpdir,
+                    capture_output=True,
+                    text=True,
+                    timeout=exec_timeout
+                )
+
+                execution_output = proc.stdout or ""
+                stderr_contents = proc.stderr or ""
+
+                # If there were missing module install issues, include them in stderr_contents
+                if missing_modules:
+                    pref = "Missing modules or install errors:\n"
+                    pref += "\n".join(f"{k}: {v}" for k, v in missing_modules.items())
+                    stderr_contents = pref + ("\n" + stderr_contents if stderr_contents else "")
+
+                if proc.returncode != 0:
+                    error_message = (stderr_contents.strip() or f"Process exited with code {proc.returncode}")
                 else:
-                    error_message = stderr_contents
+                    error_message = stderr_contents.strip()
+
+            except subprocess.TimeoutExpired as te:
+                # subprocess.run will kill the process; report timeout
+                error_message = f"Execution timed out after {exec_timeout} seconds"
+            except Exception as e:
+                error_message = f"Execution failure: {e}"
 
             # After execution, collect likely artifact files (images/charts)
             if result_dir is not None:
@@ -197,32 +243,27 @@ def execute_code_safely(code_snippet, result_dir: str | Path = None, attachments
                             shutil.copy2(f, dest)
                             artifacts.append(str(dest))
                     # Also include any attachments that were copied into tmpdir
-                    if attachments:
-                        for attach in attachments:
-                            try:
-                                p = Path(attach)
-                                local = result_path / p.name
-                                if local.exists():
-                                    # already copied by above loop
-                                    if str(local) not in artifacts:
-                                        artifacts.append(str(local))
-                                else:
-                                    # copy original attachment into result path
-                                    src = Path(tmpdir) / p.name
-                                    if src.exists():
-                                        dst = result_path / src.name
-                                        shutil.copy2(src, dst)
-                                        artifacts.append(str(dst))
-                            except Exception as ae:
-                                stderr_buffer.write(f"Attachment final copy failed for {attach}: {ae}\n")
+                    for attach in attachments:
+                        try:
+                            p = Path(attach)
+                            local = result_path / p.name
+                            if local.exists():
+                                if str(local) not in artifacts:
+                                    artifacts.append(str(local))
+                            else:
+                                src = Path(tmpdir) / p.name
+                                if src.exists():
+                                    dst = result_path / src.name
+                                    shutil.copy2(src, dst)
+                                    artifacts.append(str(dst))
+                        except Exception as ae:
+                            logger.warning(f"Attachment final copy failed for {attach}: {ae}")
                 except Exception as e:
                     # don't fail on artifact copying
                     error_message = (error_message + "\n" if error_message else "") + f"Artifact copy error: {e}"
 
         finally:
             os.chdir(orig_cwd)
-            stdout_buffer.close()
-            stderr_buffer.close()
 
     return {
         "compiled": compilation_status,

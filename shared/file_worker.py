@@ -171,11 +171,7 @@ def get_subtasks_for_processing(task_id: str) -> List[Dict[str, Any]]:
         raise
 
 
-def append_error_to_subtasks(task_id: str, error_message: str) -> List[Dict[str, Any]]:
-    """
-    Append a validation error hint to every subtask description and persist changes.
-    Returns the updated subtask payloads.
-    """
+def append_error_to_subtasks(task_id: str, error_message: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     if not error_message:
         logger.info("Empty error message supplied, skipping subtask updates")
         return read_subtasks(task_id)
@@ -191,29 +187,105 @@ def append_error_to_subtasks(task_id: str, error_message: str) -> List[Dict[str,
         return []
 
     json_files.sort(key=extract_order_number)
-    updated_subtasks: List[Dict[str, Any]] = []
-    error_suffix = f"Consider the possible error: {error_message.strip()}"
 
-    for filename in json_files:
-        file_path = os.path.join(task_folder, filename)
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+    # Normalize input into a list of dicts with keys 'error' and 'subtask'
+    normalized_errors: List[Dict[str, Any]] = []
+    if isinstance(error_message, str):
+        normalized_errors.append({'error': error_message.strip(), 'subtask': None})
+    elif isinstance(error_message, list):
+        for item in error_message:
+            if isinstance(item, dict):
+                normalized_errors.append({
+                    'error': (item.get('error') or '').strip(),
+                    'subtask': item.get('subtask')
+                })
+            else:
+                normalized_errors.append({'error': str(item).strip(), 'subtask': None})
+    else:
+        logger.warning("Unexpected error_message format; expecting list or str")
+        return read_subtasks(task_id)
 
-        description = data.get('taskDescription')
-        if isinstance(description, str):
-            if error_suffix not in description:
-                spacer = "" if description.endswith((" ", "\n")) else " "
-                data['taskDescription'] = f"{description}{spacer}{error_suffix}"
+    updated_map: Dict[str, Dict[str, Any]] = {}
+
+    def _load_json(file_path: str) -> Dict[str, Any]:
+        with open(file_path, 'r', encoding='utf-8') as fh:
+            return json.load(fh)
+
+    def _write_json(file_path: str, data: Dict[str, Any]):
+        with open(file_path, 'w', encoding='utf-8') as fh:
+            json.dump(data, fh, ensure_ascii=False, indent=2)
+
+    for err in normalized_errors:
+        err_text = err.get('error', '')
+        if not err_text:
+            continue
+
+        # Build the suffix we'll append
+        error_suffix = f"Consider the possible error: {err_text}"
+
+        subtask_ref = err.get('subtask')
+        if subtask_ref:
+            # Try to extract the subtask index from patterns like '_subtask_<index>_'
+            m = re.search(r'_subtask_(\d+)(?:_|\.|$)', subtask_ref)
+            if not m:
+                logger.warning(f"Couldn't parse subtask index from '{subtask_ref}'; skipping this error")
+                continue
+
+            idx = int(m.group(1))
+            # Find candidate files that correspond to this index
+            candidates = [fn for fn in json_files if extract_order_number(fn) == idx]
+            if not candidates:
+                logger.warning(f"No subtask JSON file found for index {idx} (from {subtask_ref})")
+                continue
+
+            for filename in candidates:
+                file_path = os.path.join(task_folder, filename)
+                try:
+                    data = _load_json(file_path)
+                except Exception as e:
+                    logger.error(f"Failed to load {filename}: {e}")
+                    continue
+
+                description = data.get('taskDescription')
+                if isinstance(description, str):
+                    if error_suffix not in description:
+                        spacer = ';' if description and not description.strip().endswith((';', ':')) else ''
+                        data['taskDescription'] = f"{description}{spacer}{error_suffix}"
+                        _write_json(file_path, data)
+                        updated_map[filename] = data
+                        logger.info(f"Appended error to {filename} (matched {subtask_ref})")
+                else:
+                    logger.warning(f"Subtask {filename} missing string taskDescription; skipping append")
         else:
-            logger.warning(
-                f"Subtask {filename} missing string taskDescription; skipping append"
-            )
+            # No specific subtask provided: append to all subtasks (backwards-compatibility)
+            for filename in json_files:
+                file_path = os.path.join(task_folder, filename)
+                try:
+                    data = _load_json(file_path)
+                except Exception as e:
+                    logger.error(f"Failed to load {filename}: {e}")
+                    continue
 
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+                description = data.get('taskDescription')
+                if isinstance(description, str):
+                    if error_suffix not in description:
+                        spacer = ';' if description and not description.strip().endswith((';', ':')) else ''
+                        data['taskDescription'] = f"{description}{spacer}{error_suffix}"
+                        _write_json(file_path, data)
+                        updated_map[filename] = data
+                        logger.info(f"Appended error to {filename} (no subtask reference)")
+                else:
+                    logger.warning(f"Subtask {filename} missing string taskDescription; skipping append")
 
-        updated_subtasks.append(data)
-        logger.info(f"Updated taskDescription with validation error in {filename}")
+    # Return updated subtask payloads in the same order as files on disk
+    updated_subtasks: List[Dict[str, Any]] = []
+    for filename in json_files:
+        if filename in updated_map:
+            updated_subtasks.append(updated_map[filename])
+
+    if not updated_subtasks:
+        # Nothing was updated; return current subtasks
+        return read_subtasks(task_id)
 
     return updated_subtasks
 
