@@ -63,25 +63,6 @@
     {
       "parameters": {
         "requestMethod": "POST",
-        "url": "http://host.docker.internal:5001/receive-test-results",
-        "jsonParameters": true,
-        "options": {},
-        "bodyParametersJson": "={{ { allTestsPassed: $json.allTestsPassed, taskId: $('Programmer: Technical Task Send').item.json.taskId } }}"
-      },
-      "name": "Programmer: Code Runner Result Send",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 2,
-      "position": [
-        -16,
-        -384
-      ],
-      "id": "54339276-ca83-4d22-b14e-100ff412f9e9",
-      "disabled": true,
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "requestMethod": "POST",
         "url": "http://host.docker.internal:5000/receive-task-completion-result",
         "jsonParameters": true,
         "options": {},
@@ -256,7 +237,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Проверяем ответ сервера с кодом\nconst response = $json;\nconsole.log(\"Error:\" + JSON.stringify(response?.results[0]?.error));\nconst error = response?.results[0]?.error;\n\nif (error && error !== '') {\n  // Если есть ошибка, возвращаем на Programmer: Technical Task Send\n  return [{\n    taskId: $('Business Analyst: Raw Technical Task Send').first().json.taskId,\n    validationResult: response, routeTo: 'error' }];\n} else {\n  // Если ошибки нет, передаем дальше\n  return [\n    {\n    taskId: $('Business Analyst: Raw Technical Task Send').first().json.taskId,\n      routeTo: 'success'\n    }\n  ];\n}"
+        "jsCode": "// Проверяем ответ сервера с кодом\nconst response = $json;\n\nconst error = response?.results?.some(item => typeof item.error === 'string' && item.error.trim() !== '');\n\nif (error) {\n  // Если есть ошибка, возвращаем на Programmer: Technical Task Send\n  return [{\n    taskId: $('Business Analyst: Raw Technical Task Send').first().json.taskId,\n    validationResult: response, routeTo: 'error' }];\n} else {\n  // Если ошибки нет, передаем дальше\n  return [\n    {\n    taskId: $('Business Analyst: Raw Technical Task Send').first().json.taskId,\n      routeTo: 'success'\n    }\n  ];\n}"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -340,17 +321,6 @@
         ]
       ]
     },
-    "Programmer: Code Runner Result Send": {
-      "main": [
-        [
-          {
-            "node": "Business Analyst: Task Completion Result Send",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Business Analyst: Task Completion Result Send": {
       "main": [
         [
@@ -377,7 +347,7 @@
       "main": [
         [
           {
-            "node": "Programmer: Code Runner Result Send",
+            "node": "Business Analyst: Task Completion Result Send",
             "type": "main",
             "index": 0
           }
@@ -484,7 +454,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "0c5f5f03-fe28-4aad-81d3-ee7cd973ffa5",
+  "versionId": "e05b3d85-8216-469c-987e-efd5c43620bc",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "eb4e11312a6611954811887d5478d8a22c8d0c00be3623bed1a2b98c1e3d5e2b"
